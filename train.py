@@ -12,7 +12,6 @@ from backbones import EmbedNetwork
 
 
 def train():
-
     ## logging
     FORMAT = '%(levelname)s %(filename)s: %(message)s'
     logging.basicConfig(level=logging.INFO, format=FORMAT, stream=sys.stdout)
@@ -21,6 +20,7 @@ def train():
     ## model and loss
     net = Embednetwork()
 
+    ## dataloader
 
 
 
