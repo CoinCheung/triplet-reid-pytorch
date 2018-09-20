@@ -30,6 +30,7 @@ class EmbedNetwork(nn.Module):
         super(EmbedNetwork, self).__init__(*args, **kwargs)
 
         self.base = torchvision.models.resnet50(pretrained_base)
+        #  self.base = torchvision.models.inception_v3(pretrained_base)
         self.base.fc = DenseNormReLU(in_feats = 2048, out_feats = 1024)
         self.embed = nn.Linear(in_features = 1024, out_features = dims)
 
