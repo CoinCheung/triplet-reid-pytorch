@@ -1,2 +1,6 @@
 datasets/Market-1501-v15.09.15
 datasets/Market-1501-v15.09.15.zip
+*.pyc
+*.so
+*.o
+*.a
