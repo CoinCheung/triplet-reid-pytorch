@@ -26,9 +26,8 @@ class Market1501(Dataset):
         # useful for sampler
         lb_array = np.array(self.labels)
         for lb in self.labels:
-            idx = lb_array[lb_array == lb]
-            im_list = [self.imgs[i] for i in idx]
-            self.lb_img_dict.update({lb: im_list})
+            idx = np.where(lb_array == lb)[0]
+            self.lb_img_dict.update({lb: list(idx)})
 
     def __len__(self):
         return len(self.imgs)
