@@ -35,7 +35,7 @@ class Market1501(Dataset):
         lb_array = np.array(self.labels)
         for lb in self.labels:
             idx = np.where(lb_array == lb)[0]
-            self.lb_img_dict.update({lb: list(idx)})
+            self.lb_img_dict.update({lb: idx})
 
     def __len__(self):
         return len(self.imgs)

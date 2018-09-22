@@ -3,7 +3,7 @@
 
 
 import torch
-
+import numpy as np
 
 
 class BatchHardTripletSelector(object):
@@ -14,7 +14,7 @@ class BatchHardTripletSelector(object):
         super(BatchHardTripletSelector, self).__init__()
 
     def __call__(self, embeds, labels):
-        dist_mtrx = self.pdist(embeds, embeds).detach().cpu().numpy()
+        dist_mtx = self.pdist(embeds, embeds).detach().cpu().numpy()
         labels = labels.contiguous().cpu().numpy().reshape((-1, 1))
         num = labels.shape[0]
         lb_eqs = labels == labels.T
@@ -25,7 +25,7 @@ class BatchHardTripletSelector(object):
             id_min, id_max = 0, 0
             ## TODO: reimplement this with c++ to avoid overhead of python loop
             for j in range(num):
-                if label[i] == label[j]:
+                if labels[i] == labels[j]:
                     if i != j:
                         if dist_mtx[i][j] > dist_max:
                             dist_max = dist_mtx[i][j]

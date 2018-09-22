@@ -21,7 +21,7 @@ class RegularBatchSampler(Sampler):
         self.n_num = n_num
         self.batch_size = n_class * n_num
         self.dataset = dataset
-        self.labels = dataset.labels
+        self.labels = np.array(dataset.labels)
         self.len = len(dataset) // self.batch_size
         self.lb_img_dict = dataset.lb_img_dict
         for k, v in self.lb_img_dict.items():
@@ -30,16 +30,21 @@ class RegularBatchSampler(Sampler):
     def __iter__(self):
         count = 0
         while count <= self.len:
-            label_batch = random.sample(self.labels, self.n_class)
+            label_batch = np.random.choice(self.labels, self.n_class, replace = False)
             idx = []
             for lb in label_batch:
-                idx_smp = random.sample(self.lb_img_dict[lb], self.n_num)
+                if len(self.lb_img_dict[lb]) > self.n_num:
+                    idx_smp = np.random.choice(self.lb_img_dict[lb],
+                            self.n_num, replace = False)
+                else:
+                    idx_smp = np.random.choice(self.lb_img_dict[lb],
+                            self.n_num, replace = True)
                 #  for i, im_idx in enumerate(idx_smp):
                 #      im_name = self.dataset.imgs[im_idx]
                 #      im = cv2.imread(im_name)
                 #      cv2.imshow('img_{}'.format(i), im)
                 #  cv2.waitKey(0)
-                idx.extend(random.sample(self.lb_img_dict[lb], self.n_num))
+                idx.extend(list(idx_smp))
             yield idx
             count += 1
 
@@ -56,5 +61,5 @@ if __name__ == "__main__":
     for i, (ims, lbs) in enumerate(dl):
         print(ims.shape)
         print(lbs.shape)
-        if i == 4: break
+        #  if i == 4: break
 
