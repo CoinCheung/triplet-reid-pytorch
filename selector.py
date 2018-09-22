@@ -11,7 +11,7 @@ class BatchHardTripletSelector(object):
     a selector to generate hard batch embeddings from the embedded batch
     '''
     def __init__(self, *args, **kwargs):
-        super(BatchHardTriplet, self).__init__()
+        super(BatchHardTripletSelector, self).__init__()
 
     def __call__(self, embeds, labels):
         dist_mtrx = self.pdist(embeds, embeds).detach().cpu().numpy()
@@ -51,3 +51,6 @@ class BatchHardTripletSelector(object):
         dist_mtx = dist_mtx.addmm_(1, -2, ten1, ten2.t())
         dist_mtx = dist_mtx.clamp(min = 1e-12).sqrt()
         return dist_mtx
+
+if __name__ == '__main__':
+    pass

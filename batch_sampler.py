@@ -34,11 +34,11 @@ class RegularBatchSampler(Sampler):
             idx = []
             for lb in label_batch:
                 idx_smp = random.sample(self.lb_img_dict[lb], self.n_num)
-                for i, im_idx in enumerate(idx_smp):
-                    im_name = self.dataset.imgs[im_idx]
-                    im = cv2.imread(im_name)
-                    cv2.imshow('img_{}'.format(i), im)
-                cv2.waitKey(0)
+                #  for i, im_idx in enumerate(idx_smp):
+                #      im_name = self.dataset.imgs[im_idx]
+                #      im = cv2.imread(im_name)
+                #      cv2.imshow('img_{}'.format(i), im)
+                #  cv2.waitKey(0)
                 idx.extend(random.sample(self.lb_img_dict[lb], self.n_num))
             yield idx
             count += 1
@@ -48,10 +48,10 @@ class RegularBatchSampler(Sampler):
 
 
 if __name__ == "__main__":
-    from Market1501 import Market1501
-    ds = Market1501('./Market-1501-v15.09.15/bounding_box_train', mode = 'train')
-    selector = RegularBatchSampler(ds, 5, 4)
-    dl = DataLoader(ds, batch_sampler = selector, num_workers = 4)
+    from datasets.Market1501 import Market1501
+    ds = Market1501('datasets/Market-1501-v15.09.15/bounding_box_train', mode = 'train')
+    sampler = RegularBatchSampler(ds, 5, 4)
+    dl = DataLoader(ds, batch_sampler = sampler, num_workers = 4)
 
     for i, (ims, lbs) in enumerate(dl):
         print(ims.shape)

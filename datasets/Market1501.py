@@ -4,9 +4,11 @@
 
 import os
 import torch
-from torch.utils.data import Dataset, DataLoader
+import torchvision
+from torch.utils.data import Dataset
 import cv2
 import numpy as np
+from PIL import Image
 
 
 class Market1501(Dataset):
@@ -22,6 +24,12 @@ class Market1501(Dataset):
         self.labels = [int(el.split('_')[0]) - 1 for el in self.imgs]
         self.imgs = [os.path.join(data_path, el) for el in self.imgs]
         self.lb_img_dict = dict()
+        self.trans = torchvision.transforms.Compose([
+            torchvision.transforms.Resize((224, 224)),
+            torchvision.transforms.RandomHorizontalFlip(),
+            torchvision.transforms.ToTensor(),
+            torchvision.transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+        ])
 
         # useful for sampler
         lb_array = np.array(self.labels)
@@ -34,6 +42,8 @@ class Market1501(Dataset):
 
     def __getitem__(self, idx):
         img = cv2.imread(self.imgs[idx])
+        img = Image.fromarray(img, 'RGB')
+        img = self.trans(img)
         return img, self.labels[idx]
 
 
