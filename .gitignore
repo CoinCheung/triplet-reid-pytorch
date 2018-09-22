@@ -4,3 +4,5 @@ datasets/Market-1501-v15.09.15.zip
 *.so
 *.o
 *.a
+datasets/__pycache__
+__pycache__
