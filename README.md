@@ -1,4 +1,7 @@
 # triplet-network-pytorch
-My implementation of triplet network with batch-hard triplet selection method
+This is my implementation of the algorithm proposed in paper [triplet network with batch-hard triplet selection method](triplet network with batch-hard triplet selection method
+).
 
-In the process of developing
+This project is based on pytorch0.4.0 and python3. 
+
+
