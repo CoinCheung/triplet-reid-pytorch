@@ -41,20 +41,26 @@ def train():
     selector = BatchHardTripletSelector()
 
     ## train
-    for it, (imgs, lbs) in enumerate(dl):
-        net.train()
-        imgs = imgs.cuda()
-        lbs = lbs.cuda()
-        embds = net(imgs)
-        anchor, positives, negatives = selector(embds, lbs)
+    count = 0
+    while True:
+        for it, (imgs, lbs) in enumerate(dl):
+            net.train()
+            imgs = imgs.cuda()
+            lbs = lbs.cuda()
+            embds = net(imgs)
+            anchor, positives, negatives = selector(embds, lbs)
 
-        loss = triplet_loss(anchor, positives, negatives)
-        if it % 20 == 0 and it != 0:
-            print(it)
-            print(loss.detach().cpu().numpy())
-        optim.zero_grad()
-        loss.backward()
-        optim.step()
+            loss = triplet_loss(anchor, positives, negatives)
+            if it % 20 == 0 and it != 0:
+                print(it)
+                print(loss.detach().cpu().numpy())
+            optim.zero_grad()
+            loss.backward()
+            optim.step()
+
+            count += 1
+            if count == 25000: break
+        if count == 25000: break
 
 
     ## dump model
