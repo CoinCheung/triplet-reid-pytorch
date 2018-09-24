@@ -38,8 +38,8 @@ class BatchHardTripletSelector(object):
             neg_idxs.append(id_min)
         neg_idxs = np.array(neg_idxs).reshape((-1, 1))
         pos_idxs = np.array(pos_idxs).reshape((-1, 1))
-        pos = embeds[pos_idxs]
-        neg = embeds[neg_idxs]
+        pos = embeds[pos_idxs].contiguous().view(num, -1)
+        neg = embeds[neg_idxs].contiguous().view(num, -1)
         return embeds, pos, neg
 
 

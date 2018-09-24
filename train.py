@@ -4,8 +4,10 @@
 import torch
 import torch.nn as nn
 import torchvision
+from torch.utils.data import DataLoader
 
 import sys
+import os
 import logging
 
 from backbones import EmbedNetwork
@@ -13,7 +15,7 @@ from loss import TripletLoss
 from selector import BatchHardTripletSelector
 from batch_sampler import RegularBatchSampler
 from datasets.Market1501 import Market1501
-from torch.utils.data import DataLoader
+from optimizer import AdamOptimWrapper
 
 
 
@@ -26,9 +28,11 @@ def train():
     ## model and loss
     net = EmbedNetwork().cuda()
     net = nn.DataParallel(net)
-    triplet_loss = TripletLoss(margin = None) # TODO: add a margin for this
+    triplet_loss = TripletLoss(margin = None).cuda() # TODO: add a margin for this
 
     ## optimizer
+    optim = AdamOptimWrapper(net.parameters(), lr = 3e-4, t0 = 15000, t1 = 25000)
+
 
     ## dataloader
     ds = Market1501('datasets/Market-1501-v15.09.15/bounding_box_train', mode = 'train')
@@ -38,17 +42,25 @@ def train():
 
     ## train
     for it, (imgs, lbs) in enumerate(dl):
+        net.train()
         imgs = imgs.cuda()
         lbs = lbs.cuda()
         embds = net(imgs)
-        print(embds.shape)
         anchor, positives, negatives = selector(embds, lbs)
-        print(anchor.shape)
-        print(positives.shape)
-        print(negatives.shape)
 
-        break
+        loss = triplet_loss(anchor, positives, negatives)
+        if it % 20 == 0 and it != 0:
+            print(it)
+            print(loss.detach().cpu().numpy())
+        optim.zero_grad()
+        loss.backward()
+        optim.step()
 
+
+    ## dump model
+    if not os.path.exists('./res'): os.makedirs('./res')
+    logger.info('saving trained model')
+    torch.save(net.module.state_dict(), './res/model.pkl')
 
 
 

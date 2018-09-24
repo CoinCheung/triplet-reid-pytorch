@@ -22,6 +22,7 @@ class TripletLoss(nn.Module):
         if self.margin is None:
             num_samples = anchor.shape[0]
             y = torch.ones((num_samples, 1)).view(-1)
+            if anchor.is_cuda: y = y.cuda()
             ap_dist = torch.norm(anchor - pos, 2, dim = 1).view(-1)
             an_dist = torch.norm(anchor - neg, 2, dim = 1).view(-1)
             loss = self.Loss(an_dist - ap_dist, y)
