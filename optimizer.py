@@ -24,10 +24,10 @@ class AdamOptimWrapper(object):
         if self.step_count < self.t0:
             self.optim.step()
         elif self.step_count == self.t0:
-            self.opim.__dict__['param_groups'][0]['betas'] = (0.5, 0.999)
+            self.optim.__dict__['param_groups'][0]['betas'] = (0.5, 0.999)
         else:
-            self.lr_old = self.opim.__dict__['param_groups'][0]['lr']
-            self.opim.__dict__['param_groups'][0]['lr'] = self.lr_old * self.lr_inc
+            self.lr_old = self.optim.__dict__['param_groups'][0]['lr']
+            self.optim.__dict__['param_groups'][0]['lr'] = self.lr_old * self.lr_inc
 
     def zero_grad(self):
         self.optim.zero_grad()

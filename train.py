@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 import sys
 import os
 import logging
+import time
 
 from backbones import EmbedNetwork
 from loss import TripletLoss
@@ -33,7 +34,6 @@ def train():
     ## optimizer
     optim = AdamOptimWrapper(net.parameters(), lr = 3e-4, t0 = 15000, t1 = 25000)
 
-
     ## dataloader
     ds = Market1501('datasets/Market-1501-v15.09.15/bounding_box_train', mode = 'train')
     sampler = RegularBatchSampler(ds, 18, 4)
@@ -44,6 +44,7 @@ def train():
     count = 0
     while True:
         for it, (imgs, lbs) in enumerate(dl):
+            st = time.time()
             net.train()
             imgs = imgs.cuda()
             lbs = lbs.cuda()
@@ -51,22 +52,30 @@ def train():
             anchor, positives, negatives = selector(embds, lbs)
 
             loss = triplet_loss(anchor, positives, negatives)
-            if it % 20 == 0 and it != 0:
-                print(it)
-                print(loss.detach().cpu().numpy())
             optim.zero_grad()
             loss.backward()
             optim.step()
 
+            if count % 20 == 0 and it != 0:
+                loss_val = loss.detach().cpu().numpy()
+                time_interval = time.time() - st
+                logger.info('iter:{}, loss:{:4f}, time: {:3f}'.format(count, loss_val, time_interval))
+
             count += 1
             if count == 25000: break
         if count == 25000: break
+
+    # it seems that there will be errors with dataloader we do not let it finish
+    # its iteration steps
+    for imgs, lbs in dl: pass
 
 
     ## dump model
     if not os.path.exists('./res'): os.makedirs('./res')
     logger.info('saving trained model')
     torch.save(net.module.state_dict(), './res/model.pkl')
+
+    logger.info('everything finished')
 
 
 
