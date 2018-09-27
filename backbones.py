@@ -4,6 +4,7 @@
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 import torchvision
 
 '''
@@ -29,24 +30,44 @@ class EmbedNetwork(nn.Module):
     def __init__(self, dims = 128, pretrained_base = True, *args, **kwargs):
         super(EmbedNetwork, self).__init__(*args, **kwargs)
 
-        self.base = torchvision.models.resnet50(pretrained_base)
+        resnet50 = torchvision.models.resnet50(pretrained_base)
+        self.base = nn.Sequential(resnet50.conv1,
+                                resnet50.bn1,
+                                resnet50.relu,
+                                resnet50.maxpool,
+                                resnet50.layer1,
+                                resnet50.layer2,
+                                resnet50.layer3,
+                                resnet50.layer4,)
+
         #  self.base = torchvision.models.inception_v3(pretrained_base)
-        self.base.fc = DenseNormReLU(in_feats = 2048, out_feats = 1024)
+        self.fc_head = DenseNormReLU(in_feats = 2048, out_feats = 1024)
         self.embed = nn.Linear(in_features = 1024, out_features = dims)
 
     def forward(self, x):
         x = self.base(x)
-        x = x.contiguous().view(-1, 1024)
+        _, _, h, w = x.shape
+        x = F.avg_pool2d(x, (h, w))
+        x = x.contiguous().view(-1, 2048)
+        x = self.fc_head(x)
         x = self.embed(x)
         return x
 
 
 
 if __name__ == "__main__":
-    embed_net = EmbedNetwork(pretrained_base = False)
+    embed_net = EmbedNetwork(pretrained_base = True)
     print(embed_net)
     #  in_tensor = torch.randn((15, 3, 299, 299))
     in_tensor = torch.randn((15, 3, 224, 224))
-    print(in_tensor.shape)
+    #  print(in_tensor.shape)
     embd = embed_net(in_tensor)
     print(embd.shape)
+    print(embed_net.state_dict().keys())
+    #  print(embed_net.base[0].weight)
+    net = torchvision.models.resnet50(False)
+    #  print(net.conv1.weight)
+    print(torch.sum(embed_net.base[0].weight == net.conv1.weight))
+    print(embed_net.base[0].weight.shape)
+    print(net.conv1.weight.shape)
+

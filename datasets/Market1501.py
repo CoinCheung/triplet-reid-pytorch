@@ -25,7 +25,8 @@ class Market1501(Dataset):
         self.imgs = [os.path.join(data_path, el) for el in self.imgs]
         self.lb_img_dict = dict()
         self.trans = torchvision.transforms.Compose([
-            torchvision.transforms.Resize((224, 224)),
+            torchvision.transforms.Resize((288, 144)),
+            torchvision.transforms.RandomCrop((256, 128)),
             torchvision.transforms.RandomHorizontalFlip(),
             torchvision.transforms.ToTensor(),
             torchvision.transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
