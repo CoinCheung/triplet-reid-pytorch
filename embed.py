@@ -11,7 +11,7 @@ import numpy as np
 import sys
 import logging
 
-from backbones import EmbedNetwork
+from backbone import EmbedNetwork
 from datasets.Market1501 import Market1501
 
 
@@ -26,13 +26,13 @@ def embed():
     logger.info('restoring model')
     model = EmbedNetwork().cuda()
     model.load_state_dict(torch.load('./res/model.pkl'))
+    model = nn.DataParallel(model)
     model.eval()
 
     ## load gallery dataset
-    batchsize = 64
+    batchsize = 32
     ds = Market1501('datasets/Market-1501-v15.09.15/bounding_box_test', mode = 'gallery')
     dl = DataLoader(ds, batch_size = batchsize, num_workers = 4)
-    ## TODO: see how could 5 crop be used
 
     ## embedding samples
     logger.info('start embedding')
@@ -43,14 +43,21 @@ def embed():
         sys.stdout.write('\r=======>  processing iter {} / {}'.format(it, all_iter_nums))
         sys.stdout.flush()
         img = img.cuda()
+        _, _, C, H, W = img.shape
+        img = img.contiguous().view(-1, C, H, W)
         lbs = lbs.contiguous().detach().numpy()
         embd = model(img).detach().cpu().numpy()
         embeddings.append(embd)
         labels.append(lbs)
-    print('   ...   completed')
+    print('  ...   completed')
 
     embeddings = np.vstack(embeddings)
     labels = np.hstack(labels)
+
+    ## aggregate embeddings
+    logger.info('aggregating embeddings')
+    N, L = embeddings.shape
+    embeddings = embeddings.reshape(int(N / 10), 10, L).mean(axis = 1)
 
     ## dump results
     logger.info('dump embeddings')
