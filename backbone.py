@@ -58,16 +58,22 @@ class EmbedNetwork(nn.Module):
 if __name__ == "__main__":
     embed_net = EmbedNetwork(pretrained_base = True)
     print(embed_net)
-    #  in_tensor = torch.randn((15, 3, 299, 299))
-    in_tensor = torch.randn((15, 3, 224, 224))
-    #  print(in_tensor.shape)
-    embd = embed_net(in_tensor)
-    print(embd.shape)
-    print(embed_net.state_dict().keys())
-    #  print(embed_net.base[0].weight)
-    net = torchvision.models.resnet50(False)
-    #  print(net.conv1.weight)
-    print(torch.sum(embed_net.base[0].weight == net.conv1.weight))
-    print(embed_net.base[0].weight.shape)
-    print(net.conv1.weight.shape)
+    #  #  in_tensor = torch.randn((15, 3, 299, 299))
+    #  in_tensor = torch.randn((15, 3, 224, 224))
+    #  #  print(in_tensor.shape)
+    #  embd = embed_net(in_tensor)
+    #  print(embd.shape)
+    #  print(embed_net.state_dict().keys())
+    #  #  print(embed_net.base[0].weight)
+    #  net = torchvision.models.resnet50(False)
+    #  #  print(net.conv1.weight)
+    #  print(torch.sum(embed_net.base[0].weight == net.conv1.weight))
+    #  print(embed_net.base[0].weight.shape)
+    #  print(net.conv1.weight.shape)
+
+    for i, ly in enumerate(embed_net.base):
+        print(ly.__class__.__name__)
+        if i > 4: break
+        #  break
+
 
