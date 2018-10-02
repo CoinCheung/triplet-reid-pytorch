@@ -10,13 +10,41 @@ import pickle
 import numpy as np
 import sys
 import logging
+import argparse
 
 from backbone import EmbedNetwork
 from datasets.Market1501 import Market1501
 
 
+def parse_args():
+    parse = argparse.ArgumentParser()
+    parse.add_argument(
+            '--dataset_mode',
+            dest = 'ds_mode',
+            type = str,
+            required = True,
+            help = 'which sub-category of dataset Market1501 is to be used'
+            )
+    parse.add_argument(
+            '--store_pth',
+            dest = 'store_pth',
+            type = str,
+            required = True,
+            help = 'path that the embeddings are stored'
+            )
+    parse.add_argument(
+            '--data_pth',
+            dest = 'data_pth',
+            type = str,
+            required = True,
+            help = 'path that the raw images are stored'
+            )
 
-def embed():
+    return parse.parse_args()
+
+
+
+def embed(args):
     ## logging
     FORMAT = '%(levelname)s %(filename)s:%(lineno)4d: %(message)s'
     logging.basicConfig(level=logging.INFO, format=FORMAT, stream=sys.stdout)
@@ -31,7 +59,7 @@ def embed():
 
     ## load gallery dataset
     batchsize = 32
-    ds = Market1501('datasets/Market-1501-v15.09.15/bounding_box_test', mode = 'gallery')
+    ds = Market1501(args.data_pth, mode = args.ds_mode)
     dl = DataLoader(ds, batch_size = batchsize, num_workers = 4)
 
     ## embedding samples
@@ -62,11 +90,13 @@ def embed():
     ## dump results
     logger.info('dump embeddings')
     embd_res = {'embeddings': embeddings, 'labels': labels}
-    with open('res/embds.pkl', 'wb') as fw:
+    with open(args.store_pth, 'wb') as fw:
         pickle.dump(embd_res, fw)
 
     logger.info('everything finished')
 
 
+
 if __name__ == '__main__':
-    embed()
+    args = parse_args()
+    embed(args)

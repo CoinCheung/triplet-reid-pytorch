@@ -32,7 +32,7 @@ class Market1501(Dataset):
                 torchvision.transforms.ToTensor(),
                 torchvision.transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
             ])
-        elif self.mode == 'gallery':
+        elif self.mode == 'gallery' or self.mode == 'query':
             self.trans1 = torchvision.transforms.Compose([
                 torchvision.transforms.Resize((288, 144)),
                 torchvision.transforms.FiveCrop((256, 128)),
@@ -47,6 +47,8 @@ class Market1501(Dataset):
                 torchvision.transforms.ToTensor(),
                 torchvision.transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
             ])
+        else:
+            raise ValueError('unsupport mode of {} for Market1501'. format(self.mode))
 
         # useful for sampler
         lb_array = np.array(self.labels)
@@ -62,7 +64,7 @@ class Market1501(Dataset):
         img = Image.fromarray(img, 'RGB')
         if self.mode == 'train':
             img = self.trans(img)
-        elif self.mode == 'gallery':
+        elif self.mode == 'gallery' or self.mode == 'query':
             img_crops = self.trans1(img)
             img1 = torch.stack([self.trans2(crop) for crop in img_crops])
             img2 = torch.stack([self.trans3(crop) for crop in img_crops])

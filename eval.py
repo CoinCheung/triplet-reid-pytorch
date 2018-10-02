@@ -10,29 +10,50 @@ import pickle
 import numpy as np
 import sys
 import logging
-
-from backbone import EmbedNetwork
-from datasets.Market1501 import Market1501
+import argparse
 
 
-def eval():
+def parse_args():
+    parse = argparse.ArgumentParser()
+    parse.add_argument(
+            '--gallery_embs',
+            dest = 'gallery_embs',
+            type = str,
+            required = True,
+            help = 'path to embeddings of gallery dataset'
+            )
+    parse.add_argument(
+            '--query_embs',
+            dest = 'query_embs',
+            type = str,
+            required = True,
+            help = 'path to embeddings of query dataset'
+            )
+
+    return parse.parse_args()
+
+
+def evaluate(args):
     ## logging
     FORMAT = '%(levelname)s %(filename)s:%(lineno)4d: %(message)s'
     logging.basicConfig(level=logging.INFO, format=FORMAT, stream=sys.stdout)
     logger = logging.getLogger(__name__)
 
-    ## restore model
-    logger.info('restoring model')
-    model = EmbedNetwork().cuda()
-    model.load_state_dict(torch.load('./res/model.pkl'))
-    model = nn.DataParallel(model)
-    model.eval()
+    ## load embeddings
+    logger.info('loading gallery embeddings')
+    with open(args.gallery_embs, 'rb') as fr:
+        emb_gallery = pickle.load(fr)
+    print(emb_gallery['embeddings'].shape)
+    print(emb_gallery['labels'].shape)
+    logger.info('loading query embeddings')
+    with open(args.query_embs, 'rb') as fr:
+        emb_query = pickle.load(fr)
+    print(emb_query['embeddings'].shape)
+    print(emb_query['labels'].shape)
 
-    ## load gallery dataset
-    batchsize = 32
-    ds = Market1501('datasets/Market-1501-v15.09.15/bounding_box_test', mode = 'gallery')
-    dl = DataLoader(ds, batch_size = batchsize, num_workers = 4)
+
 
 
 if __name__ == '__main__':
-    pass
+    args = parse_args()
+    evaluate(args)

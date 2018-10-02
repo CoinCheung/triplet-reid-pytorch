@@ -10,11 +10,19 @@ To train on the Market1501 dataset, just run the train script:
 ```
     $ python3 train.py
 ```
-This will train an embedder model based on ResNet-50. The trained model will be stored in the directory of ```/res```.
+This will train an embedder model based on ResNet-50. The trained model will be stored in the path of ```/res/model.pkl```.
 
 
-To embed the gallery set of Market1501 run the embed script:
+To embed the gallery set and query set of Market1501 run the embed script:
 ```
-    $ python3 embed.py
+    $ python3 embed.py \
+      --dataset_mode gallery \
+      --store_pth ./res/emb_gallery.pkl \
+      --data_pth datasets/Market-1501-v15.09.15/bounding_box_test
+
+    $ python3 embed.py \
+      --dataset_mode query \
+      --store_pth ./res/emb_query.pkl \
+      --data_pth datasets/Market-1501-v15.09.15/query
 ```
-This script will use the trained embedder to embed the gallery set and store the embeddings as ```/res/embds.pkl```.
+This script will use the trained embedder to embed the gallery and query set of Market1501, and store the embeddings as ```/res/embd_gallery.pkl``` and ```/res/emb_query.pkl```.
