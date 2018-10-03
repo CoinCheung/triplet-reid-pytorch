@@ -12,6 +12,7 @@ import sys
 import logging
 import argparse
 
+from utils import pdist_np as pdist
 
 def parse_args():
     parse = argparse.ArgumentParser()
@@ -42,15 +43,22 @@ def evaluate(args):
     ## load embeddings
     logger.info('loading gallery embeddings')
     with open(args.gallery_embs, 'rb') as fr:
-        emb_gallery = pickle.load(fr)
-    print(emb_gallery['embeddings'].shape)
-    print(emb_gallery['labels'].shape)
+        gallery_dict = pickle.load(fr)
+        emb_gallery, lb_gallery = gallery_dict['embeddings'], gallery_dict['labels']
+    print(emb_gallery.shape)
+    print(lb_gallery.shape)
     logger.info('loading query embeddings')
     with open(args.query_embs, 'rb') as fr:
-        emb_query = pickle.load(fr)
-    print(emb_query['embeddings'].shape)
-    print(emb_query['labels'].shape)
+        query_dict = pickle.load(fr)
+        emb_query, lb_query = query_dict['embeddings'], query_dict['labels']
+    print(emb_query.shape)
+    print(lb_query.shape)
 
+    dist_mtx = pdist(emb_query, emb_gallery)
+    print(dist_mtx.shape)
+
+    ## compute mAP
+    indices = np.argsort(dist_mtx, axis = 1)
 
 
 

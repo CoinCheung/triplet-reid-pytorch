@@ -43,7 +43,7 @@ def train():
     ## train
     count = 0
     while True:
-        for it, (imgs, lbs) in enumerate(dl):
+        for it, (imgs, lbs, _) in enumerate(dl):
             st = time.time()
             net.train()
             imgs = imgs.cuda()

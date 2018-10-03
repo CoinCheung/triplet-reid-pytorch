@@ -21,7 +21,8 @@ class Market1501(Dataset):
         self.data_path = data_path
         self.imgs = os.listdir(data_path)
         self.imgs = [el for el in self.imgs if el[-4:] == '.jpg']
-        self.labels = [int(el.split('_')[0]) - 1 for el in self.imgs]
+        self.lb_ids = [int(el.split('_')[0]) - 1 for el in self.imgs]
+        self.lb_cams = [int(el.split('_')[1][1]) - 1 for el in self.imgs]
         self.imgs = [os.path.join(data_path, el) for el in self.imgs]
         self.lb_img_dict = dict()
         if self.mode == 'train':
@@ -51,8 +52,8 @@ class Market1501(Dataset):
             raise ValueError('unsupport mode of {} for Market1501'. format(self.mode))
 
         # useful for sampler
-        lb_array = np.array(self.labels)
-        for lb in self.labels:
+        lb_array = np.array(self.lb_ids)
+        for lb in self.lb_ids:
             idx = np.where(lb_array == lb)[0]
             self.lb_img_dict.update({lb: idx})
 
@@ -69,7 +70,7 @@ class Market1501(Dataset):
             img1 = torch.stack([self.trans2(crop) for crop in img_crops])
             img2 = torch.stack([self.trans3(crop) for crop in img_crops])
             img = torch.cat([img1, img2])
-        return img, self.labels[idx]
+        return img, self.lb_ids[idx], self.lb_cams[idx]
 
 
 

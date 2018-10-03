@@ -21,7 +21,7 @@ class RegularBatchSampler(Sampler):
         self.n_num = n_num
         self.batch_size = n_class * n_num
         self.dataset = dataset
-        self.labels = np.array(dataset.labels)
+        self.labels = np.array(dataset.lb_ids)
         self.len = len(dataset) // self.batch_size
         self.lb_img_dict = dataset.lb_img_dict
         for k, v in self.lb_img_dict.items():

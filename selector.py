@@ -4,6 +4,7 @@
 
 import torch
 import numpy as np
+from utils import pdist_torch as pdist
 
 
 class BatchHardTripletSelector(object):
@@ -14,7 +15,7 @@ class BatchHardTripletSelector(object):
         super(BatchHardTripletSelector, self).__init__()
 
     def __call__(self, embeds, labels):
-        dist_mtx = self.pdist(embeds, embeds).detach().cpu().numpy()
+        dist_mtx = pdist(embeds, embeds).detach().cpu().numpy()
         labels = labels.contiguous().cpu().numpy().reshape((-1, 1))
         num = labels.shape[0]
         lb_eqs = labels == labels.T
@@ -43,14 +44,6 @@ class BatchHardTripletSelector(object):
         return embeds, pos, neg
 
 
-    def pdist(self, ten1, ten2):
-        m, n = ten1.shape[0], ten2.shape[0]
-        ten1_pow = torch.pow(ten1, 2).sum(dim = 1, keepdim = True).expand((m, n))
-        ten2_pow = torch.pow(ten2, 2).sum(dim = 1, keepdim = True).expand((n, m)).t()
-        dist_mtx = ten1_pow + ten2_pow
-        dist_mtx = dist_mtx.addmm_(1, -2, ten1, ten2.t())
-        dist_mtx = dist_mtx.clamp(min = 1e-12).sqrt()
-        return dist_mtx
 
 if __name__ == '__main__':
     pass

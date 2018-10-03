@@ -67,7 +67,7 @@ def embed(args):
     all_iter_nums = len(ds) // batchsize
     embeddings = []
     labels = []
-    for it, (img, lbs) in enumerate(dl):
+    for it, (img, lbs, _) in enumerate(dl):
         sys.stdout.write('\r=======>  processing iter {} / {}'.format(it, all_iter_nums))
         sys.stdout.flush()
         img = img.cuda()
