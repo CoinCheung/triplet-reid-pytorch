@@ -11,10 +11,13 @@ import numpy as np
 import sys
 import logging
 import argparse
+import cv2
 
 from backbone import EmbedNetwork
 from datasets.Market1501 import Market1501
 
+
+torch.multiprocessing.set_sharing_strategy('file_system')
 
 def parse_args():
     parse = argparse.ArgumentParser()
@@ -30,7 +33,7 @@ def parse_args():
             dest = 'store_pth',
             type = str,
             required = True,
-            help = 'path that the embeddings are stored'
+            help = 'path that the embeddings are stored: e.g.: ./res/emb.pkl'
             )
     parse.add_argument(
             '--data_pth',
@@ -66,21 +69,25 @@ def embed(args):
     logger.info('start embedding')
     all_iter_nums = len(ds) // batchsize
     embeddings = []
-    labels = []
-    for it, (img, lbs, _) in enumerate(dl):
+    label_ids = []
+    label_cams = []
+    for it, (img, lb_ids, lb_cams) in enumerate(dl):
         sys.stdout.write('\r=======>  processing iter {} / {}'.format(it, all_iter_nums))
         sys.stdout.flush()
         img = img.cuda()
         _, _, C, H, W = img.shape
         img = img.contiguous().view(-1, C, H, W)
-        lbs = lbs.contiguous().detach().numpy()
+        lb_ids = lb_ids.contiguous().detach().numpy()
+        lb_cams = lb_cams.contiguous().detach().numpy()
         embd = model(img).detach().cpu().numpy()
         embeddings.append(embd)
-        labels.append(lbs)
+        label_ids.append(lb_ids)
+        label_cams.append(lb_cams)
     print('  ...   completed')
 
     embeddings = np.vstack(embeddings)
-    labels = np.hstack(labels)
+    label_ids = np.hstack(label_ids)
+    label_cams = np.hstack(label_cams)
 
     ## aggregate embeddings
     logger.info('aggregating embeddings')
@@ -89,7 +96,7 @@ def embed(args):
 
     ## dump results
     logger.info('dump embeddings')
-    embd_res = {'embeddings': embeddings, 'labels': labels}
+    embd_res = {'embeddings': embeddings, 'label_ids': label_ids, 'label_cams': label_cams}
     with open(args.store_pth, 'wb') as fw:
         pickle.dump(embd_res, fw)
 
