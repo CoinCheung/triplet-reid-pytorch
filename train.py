@@ -19,6 +19,8 @@ from datasets.Market1501 import Market1501
 from optimizer import AdamOptimWrapper
 
 
+torch.multiprocessing.set_sharing_strategy('file_system')
+
 
 def train():
     ## logging
