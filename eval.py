@@ -45,12 +45,10 @@ def evaluate(args):
     with open(args.gallery_embs, 'rb') as fr:
         gallery_dict = pickle.load(fr)
         emb_gallery, lb_ids_gallery, lb_cams_gallery = gallery_dict['embeddings'], gallery_dict['label_ids'], gallery_dict['label_cams']
-        print(lb_ids_gallery.shape)
     logger.info('loading query embeddings')
     with open(args.query_embs, 'rb') as fr:
         query_dict = pickle.load(fr)
-        emb_query, lb_ids_query, lb_cams_query = query_dict['embeddings'], gallery_dict['label_ids'], gallery_dict['label_cams']
-        print(lb_ids_query.shape)
+        emb_query, lb_ids_query, lb_cams_query = query_dict['embeddings'], query_dict['label_ids'], query_dict['label_cams']
 
     ## compute and clean distance matrix
     dist_mtx = pdist(emb_query, emb_gallery)
@@ -60,22 +58,32 @@ def evaluate(args):
     query_ovlp = np.logical_and(lb_ids_matchs, lb_cams_matchs)
     # set query images whose pids are -1 to invalid
     n_qu, n_ga = dist_mtx.shape
-    print(lb_ids_query.shape)
-    print((lb_ids_query == -1).shape)
     invalid_query = np.repeat((lb_ids_query == -1), n_ga, 0).reshape(n_qu, n_ga)
     invalid_mask = np.logical_or(invalid_query, query_ovlp)
     dist_mtx[invalid_mask] = np.inf
 
     ## compute mAP
     # change distance into score
-    scores = 1 / (1 + dist_mtx)
+    scores = 1.0 / (1 + dist_mtx)
     lb_ids_matchs[invalid_mask] = False
+    print(lb_ids_matchs.shape)
+    print(np.max(lb_ids_query))
+    print(np.min(lb_ids_query))
+    print(np.max(lb_ids_gallery))
+    print(np.min(lb_ids_gallery))
 
     aps = []
     for i in range(n_qu):
         ap = average_precision_score(lb_ids_matchs[i], scores[i])
+        #  print(ap)
         if np.isnan(ap):
-            logger.info('having an ap of Nan, neglecting')
+            print(lb_ids_matchs[i])
+            print(np.sum(lb_ids_matchs[i]))
+            print(lb_ids_query[i])
+            print(scores[i])
+            print(dist_mtx[i])
+            return
+            #  logger.info('having an ap of Nan, neglecting')
             continue
         aps.append(ap)
     mAP = sum(aps) / len(aps)
