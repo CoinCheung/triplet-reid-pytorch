@@ -67,7 +67,7 @@ def train():
 
     # it seems that there will be errors with dataloader we do not let it finish
     # its iteration steps
-    for imgs, lbs in dl: pass
+    #  for imgs, lbs in dl: pass
 
 
     ## dump model

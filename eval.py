@@ -61,35 +61,24 @@ def evaluate(args):
     invalid_query = np.repeat((lb_ids_query == -1), n_ga, 0).reshape(n_qu, n_ga)
     invalid_mask = np.logical_or(invalid_query, query_ovlp)
     dist_mtx[invalid_mask] = np.inf
+    lb_ids_matchs[invalid_mask] = False
 
     ## compute mAP
     # change distance into score
     scores = 1.0 / (1 + dist_mtx)
-    lb_ids_matchs[invalid_mask] = False
-    print(lb_ids_matchs.shape)
-    print(np.max(lb_ids_query))
-    print(np.min(lb_ids_query))
-    print(np.max(lb_ids_gallery))
-    print(np.min(lb_ids_gallery))
 
     aps = []
     for i in range(n_qu):
         ap = average_precision_score(lb_ids_matchs[i], scores[i])
-        #  print(ap)
         if np.isnan(ap):
-            print(lb_ids_matchs[i])
-            print(np.sum(lb_ids_matchs[i]))
-            print(lb_ids_query[i])
-            print(scores[i])
-            print(dist_mtx[i])
-            return
-            #  logger.info('having an ap of Nan, neglecting')
+            logger.info('having an ap of Nan, neglecting')
             continue
         aps.append(ap)
     mAP = sum(aps) / len(aps)
 
     print("map is: {}".format(mAP))
-
+    print(max(aps))
+    print(min(aps))
 
 
 

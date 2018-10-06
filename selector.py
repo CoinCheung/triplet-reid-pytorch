@@ -18,27 +18,15 @@ class BatchHardTripletSelector(object):
         dist_mtx = pdist(embeds, embeds).detach().cpu().numpy()
         labels = labels.contiguous().cpu().numpy().reshape((-1, 1))
         num = labels.shape[0]
+        dia_inds = np.diag_indices(num)
         lb_eqs = labels == labels.T
-        pos_idxs = []
-        neg_idxs = []
-        for i in range(num):
-            dist_min, dist_max = dist_mtx[i][0], dist_mtx[i][0]
-            id_min, id_max = 0, 0
-            ## TODO: reimplement this with c++ to avoid overhead of python loop
-            for j in range(num):
-                if labels[i] == labels[j]:
-                    if i != j:
-                        if dist_mtx[i][j] > dist_max:
-                            dist_max = dist_mtx[i][j]
-                            id_max = j
-                else:
-                    if dist_mtx[i][j] < dist_min:
-                        dist_min = dist_mtx[i][j]
-                        id_min = j
-            pos_idxs.append(id_max)
-            neg_idxs.append(id_min)
-        neg_idxs = np.array(neg_idxs).reshape((-1, 1))
-        pos_idxs = np.array(pos_idxs).reshape((-1, 1))
+        lb_eqs[dia_inds] = False
+        dist_same = lb_eqs * dist_mtx
+        pos_idxs = np.argmax(dist_same, axis = 1)
+        lb_eqs = 1 - lb_eqs
+        lb_eqs[dia_inds] = False
+        dist_diff = lb_eqs * dist_mtx
+        neg_idxs = np.argmin(dist_diff, axis = 1)
         pos = embeds[pos_idxs].contiguous().view(num, -1)
         neg = embeds[neg_idxs].contiguous().view(num, -1)
         return embeds, pos, neg

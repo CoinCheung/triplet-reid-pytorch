@@ -72,8 +72,7 @@ def embed(args):
     label_ids = []
     label_cams = []
     for it, (img, lb_ids, lb_cams) in enumerate(dl):
-        sys.stdout.write('\r=======>  processing iter {} / {}'.format(it, all_iter_nums))
-        sys.stdout.flush()
+        print('\r=======>  processing iter {} / {}'.format(it, all_iter_nums), end = '', flush = True)
         img = img.cuda()
         _, _, C, H, W = img.shape
         img = img.contiguous().view(-1, C, H, W)
@@ -92,7 +91,7 @@ def embed(args):
     ## aggregate embeddings
     logger.info('aggregating embeddings')
     N, L = embeddings.shape
-    embeddings = embeddings.reshape(int(N / 10), 10, L).mean(axis = 1)
+    #  embeddings = embeddings.reshape(int(N / 10), 10, L).mean(axis = 1)
 
     ## dump results
     logger.info('dump embeddings')
