@@ -16,8 +16,6 @@ import cv2
 from backbone import EmbedNetwork
 from datasets.Market1501 import Market1501
 
-## TODO: use back five crop
-
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 
@@ -93,7 +91,7 @@ def embed(args):
     ## aggregate embeddings
     logger.info('aggregating embeddings')
     N, L = embeddings.shape
-    #  embeddings = embeddings.reshape(int(N / 10), 10, L).mean(axis = 1)
+    embeddings = embeddings.reshape(int(N / 10), 10, L).mean(axis = 1)
 
     ## dump results
     logger.info('dump embeddings')

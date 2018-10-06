@@ -11,8 +11,6 @@ import numpy as np
 from PIL import Image
 
 
-## TODO: use back no-csv data loader
-## TODO: use back five crop
 
 
 class Market1501(Dataset):
@@ -24,10 +22,6 @@ class Market1501(Dataset):
         self.mode = mode
         self.data_path = data_path
         self.imgs = os.listdir(data_path)
-        if self.mode == 'query':
-            with open('./datasets/Market-1501-v15.09.15/market1501_query.csv', 'r') as fr:
-                lines = fr.read().splitlines()
-                self.imgs = [el.split('/')[-1] for el in lines]
         self.imgs = [el for el in self.imgs if os.path.splitext(el)[1] == '.jpg']
         self.lb_ids = [int(el.split('_')[0]) for el in self.imgs]
         self.lb_cams = [int(el.split('_')[1][1]) for el in self.imgs]
