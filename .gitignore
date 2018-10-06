@@ -7,3 +7,4 @@
 *.a
 /datasets/__pycache__/
 /__pycache__/
+try.py

@@ -12,7 +12,7 @@ from sklearn.metrics import average_precision_score
 
 from utils import pdist_np as pdist
 
-## TODO: change args_parser
+## TODO: change args_parser back to required
 
 def parse_args():
     parse = argparse.ArgumentParser()
@@ -79,9 +79,6 @@ def evaluate(args):
     mAP = sum(aps) / len(aps)
 
     print("map is: {}".format(mAP))
-    print(max(aps))
-    print(min(aps))
-
 
 
 if __name__ == '__main__':
