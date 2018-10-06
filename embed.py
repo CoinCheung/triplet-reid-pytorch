@@ -16,6 +16,8 @@ import cv2
 from backbone import EmbedNetwork
 from datasets.Market1501 import Market1501
 
+## TODO: use back five crop
+
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 

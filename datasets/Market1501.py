@@ -11,6 +11,10 @@ import numpy as np
 from PIL import Image
 
 
+## TODO: use back no-csv data loader
+## TODO: use back five crop
+
+
 class Market1501(Dataset):
     '''
     a wrapper of Market1501 dataset
