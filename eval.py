@@ -2,9 +2,6 @@
 # -*- encoding: utf-8 -*-
 
 import torch
-import torch.nn as nn
-import torchvision
-from torch.utils.data import DataLoader
 
 import pickle
 import numpy as np
@@ -21,14 +18,16 @@ def parse_args():
             '--gallery_embs',
             dest = 'gallery_embs',
             type = str,
-            required = True,
+            #  required = True,
+            default = './res/emb_gallery.pkl',
             help = 'path to embeddings of gallery dataset'
             )
     parse.add_argument(
             '--query_embs',
             dest = 'query_embs',
             type = str,
-            required = True,
+            #  required = True,
+            default = './res/emb_query.pkl',
             help = 'path to embeddings of query dataset'
             )
 
@@ -51,13 +50,15 @@ def evaluate(args):
         query_dict = pickle.load(fr)
         emb_query, lb_ids_query, lb_cams_query = query_dict['embeddings'], gallery_dict['label_ids'], gallery_dict['label_cams']
 
+    print(np.max(lb_ids_query))
+    print(np.min(lb_ids_query))
     dist_mtx = pdist(emb_query, emb_gallery)
 
     ## compute mAP
     n_qu, n_ga = dist_mtx.shape
     indices = np.argsort(dist_mtx, axis = 1)
     #  print(indices.shape)
-    correct = (lb_ids_gallery[indices] == lb_ids_query[:, np.newaxis])
+    correct = (lb_ids_gallery == lb_ids_query[:, np.newaxis])
     print(lb_ids_gallery[indices])
     print(correct.shape)
     aps = np.zeros(n_qu)
@@ -65,7 +66,7 @@ def evaluate(args):
     for i in range(n_qu):
         valid = ((lb_ids_gallery[indices[i]]) != lb_ids_query[i] |
                 (lb_cams_gallery[indices[i]] != lb_cams_query[i]))
-        print(correct.shape)
+        #  print(correct.shape)
         y_true = correct[i, valid]
         y_score = - dist_mtx[i][indices[i]][valid]
         if not np.any(y_true): continue
