@@ -45,38 +45,41 @@ def evaluate(args):
     with open(args.gallery_embs, 'rb') as fr:
         gallery_dict = pickle.load(fr)
         emb_gallery, lb_ids_gallery, lb_cams_gallery = gallery_dict['embeddings'], gallery_dict['label_ids'], gallery_dict['label_cams']
+        print(lb_ids_gallery.shape)
     logger.info('loading query embeddings')
     with open(args.query_embs, 'rb') as fr:
         query_dict = pickle.load(fr)
         emb_query, lb_ids_query, lb_cams_query = query_dict['embeddings'], gallery_dict['label_ids'], gallery_dict['label_cams']
+        print(lb_ids_query.shape)
 
-    print(np.max(lb_ids_query))
-    print(np.min(lb_ids_query))
+    ## compute and clean distance matrix
     dist_mtx = pdist(emb_query, emb_gallery)
+    # find images in query set that have identical cam id and pid overlaps with gallery set (nxm matrix)
+    lb_ids_matchs = lb_ids_query[:, np.newaxis] == lb_ids_gallery
+    lb_cams_matchs = lb_cams_query[:, np.newaxis] == lb_cams_gallery
+    query_ovlp = np.logical_and(lb_ids_matchs, lb_cams_matchs)
+    # set query images whose pids are -1 to invalid
+    n_qu, n_ga = dist_mtx.shape
+    print(lb_ids_query.shape)
+    print((lb_ids_query == -1).shape)
+    invalid_query = np.repeat((lb_ids_query == -1), n_ga, 0).reshape(n_qu, n_ga)
+    invalid_mask = np.logical_or(invalid_query, query_ovlp)
+    dist_mtx[invalid_mask] = np.inf
 
     ## compute mAP
-    n_qu, n_ga = dist_mtx.shape
-    indices = np.argsort(dist_mtx, axis = 1)
-    #  print(indices.shape)
-    correct = (lb_ids_gallery == lb_ids_query[:, np.newaxis])
-    print(lb_ids_gallery[indices])
-    print(correct.shape)
-    aps = np.zeros(n_qu)
-    query_valid = np.zeros(n_qu)
+    # change distance into score
+    scores = 1 / (1 + dist_mtx)
+    lb_ids_matchs[invalid_mask] = False
+
+    aps = []
     for i in range(n_qu):
-        valid = ((lb_ids_gallery[indices[i]]) != lb_ids_query[i] |
-                (lb_cams_gallery[indices[i]] != lb_cams_query[i]))
-        #  print(correct.shape)
-        y_true = correct[i, valid]
-        y_score = - dist_mtx[i][indices[i]][valid]
-        if not np.any(y_true): continue
-        query_valid[i] = 1
-        aps[i] = average_precision_score(y_true, y_score)
+        ap = average_precision_score(lb_ids_matchs[i], scores[i])
+        if np.isnan(ap):
+            logger.info('having an ap of Nan, neglecting')
+            continue
+        aps.append(ap)
+    mAP = sum(aps) / len(aps)
 
-    if len(aps) == 0:
-        raise RuntimeError('No valid query')
-
-    mAP = float(np.sum(aps)) / np.sum(query_valid)
     print("map is: {}".format(mAP))
 
 
