@@ -42,6 +42,11 @@ def evaluate(args):
     logging.basicConfig(level=logging.INFO, format=FORMAT, stream=sys.stdout)
     logger = logging.getLogger(__name__)
 
+    ## check scikit-learn version
+    import sklearn
+    assert sklearn.__version__ == '0.18.1', 'eval.py require scikit-learn version to be 0.18.1, but you got a version of {}'.format(sklearn.__version__)
+
+
     ## load embeddings
     logger.info('loading gallery embeddings')
     with open(args.gallery_embs, 'rb') as fr:
@@ -53,25 +58,32 @@ def evaluate(args):
         emb_query, lb_ids_query, lb_cams_query = query_dict['embeddings'], query_dict['label_ids'], query_dict['label_cams']
 
     ## compute and clean distance matrix
+    ### TODO: pick out useless code and comments
     dist_mtx = pdist(emb_query, emb_gallery)
+    indices = np.argsort(dist_mtx, axis = 1)
     # find images in query set that have identical cam id and pid overlaps with gallery set (nxm matrix)
-    lb_ids_matchs = lb_ids_query[:, np.newaxis] == lb_ids_gallery
-    lb_cams_matchs = lb_cams_query[:, np.newaxis] == lb_cams_gallery
-    query_ovlp = np.logical_and(lb_ids_matchs, lb_cams_matchs)
-    # set query images whose pids are -1 to invalid
+    lb_ids_matchs = lb_ids_query[:, np.newaxis] != lb_ids_gallery
+    lb_cams_matchs = lb_cams_query[:, np.newaxis] != lb_cams_gallery
+    query_ovlp = np.logical_or(lb_ids_matchs, lb_cams_matchs)
+    # set gallery images whose pids are -1 to invalid
     n_qu, n_ga = dist_mtx.shape
-    invalid_query = np.repeat((lb_ids_query == -1), n_ga, 0).reshape(n_qu, n_ga)
-    invalid_mask = np.logical_or(invalid_query, query_ovlp)
-    dist_mtx[invalid_mask] = np.inf
-    lb_ids_matchs[invalid_mask] = False
+    invalid_gallery = np.tile((lb_ids_gallery == -1), n_qu).reshape(n_qu, n_ga)
+    #  invalid_mask = np.logical_or(invalid_gallery, query_ovlp)
+    dist_mtx[invalid_gallery] = np.inf
+    lb_ids_matchs[invalid_gallery] = False
 
     ## compute mAP
     # change distance into score
-    scores = 1.0 / (1 + dist_mtx)
+    matchs = lb_ids_gallery[indices] == lb_ids_query[:, np.newaxis]
+    #  scores = 1.0 / (1 + dist_mtx)
 
     aps = []
     for i in range(n_qu):
-        ap = average_precision_score(lb_ids_matchs[i], scores[i])
+        score = 1.0 / (1 + dist_mtx[i][indices[i]])
+        if np.sum(query_ovlp[i]) == 0:
+            logger.info('invalid query')
+            continue
+        ap = average_precision_score(matchs[i], score)
         if np.isnan(ap):
             logger.info('having an ap of Nan, neglecting')
             continue

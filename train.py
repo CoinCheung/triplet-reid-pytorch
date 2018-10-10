@@ -34,7 +34,7 @@ def train():
     triplet_loss = TripletLoss(margin = None).cuda() # no margin means soft-margin
 
     ## optimizer
-    optim = AdamOptimWrapper(net.parameters(), lr = 3e-4, t0 = 15000, t1 = 25000)
+    optim = AdamOptimWrapper(net.parameters(), lr = 3e-4, wd = 5e-4, t0 = 15000, t1 = 25000)
 
     ## dataloader
     ds = Market1501('datasets/Market-1501-v15.09.15/bounding_box_train', mode = 'train')
@@ -45,6 +45,7 @@ def train():
     ## train
     count = 0
     while True:
+        ## TODO: use infinite dataloader
         for it, (imgs, lbs, _) in enumerate(dl):
             st = time.time()
             net.train()
@@ -61,15 +62,12 @@ def train():
             if count % 20 == 0 and it != 0:
                 loss_val = loss.detach().cpu().numpy()
                 time_interval = time.time() - st
-                logger.info('iter:{}, loss:{:4f}, time: {:3f}'.format(count, loss_val, time_interval))
+                logger.info('iter:{}, loss:{:4f}, lr:{:4f}, time: {:3f}'.format(count,
+                    loss_val, optim.lr, time_interval))
 
             count += 1
             if count == 25000: break
         if count == 25000: break
-
-    # it seems that there will be errors with dataloader we do not let it finish
-    # its iteration steps
-    #  for imgs, lbs in dl: pass
 
 
     ## dump model

@@ -31,21 +31,30 @@ class EmbedNetwork(nn.Module):
         super(EmbedNetwork, self).__init__(*args, **kwargs)
 
         resnet50 = torchvision.models.resnet50(pretrained_base)
-        self.base = nn.Sequential(resnet50.conv1,
-                                resnet50.bn1,
-                                resnet50.relu,
-                                resnet50.maxpool,
-                                resnet50.layer1,
-                                resnet50.layer2,
-                                resnet50.layer3,
-                                resnet50.layer4,)
+        self.conv1 = resnet50.conv1
+        self.bn1 = resnet50.bn1
+        self.relu = resnet50.relu
+        self.maxpool = resnet50.maxpool
+        self.layer1 = resnet50.layer1
+        self.layer2 = resnet50.layer2
+        self.layer3 = resnet50.layer3
+        self.layer4 = resnet50.layer4
 
         #  self.base = torchvision.models.inception_v3(pretrained_base)
         self.fc_head = DenseNormReLU(in_feats = 2048, out_feats = 1024)
         self.embed = nn.Linear(in_features = 1024, out_features = dims)
 
     def forward(self, x):
-        x = self.base(x)
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
+
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+
         _, _, h, w = x.shape
         x = F.avg_pool2d(x, (h, w))
         x = x.contiguous().view(-1, 2048)
