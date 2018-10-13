@@ -31,24 +31,22 @@ class Market1501(Dataset):
             self.trans = torchvision.transforms.Compose([
                 torchvision.transforms.Resize((288, 144)),
                 torchvision.transforms.RandomCrop((256, 128)),
+                #  torchvision.transforms.TenCrop((256, 128)),
                 torchvision.transforms.RandomHorizontalFlip(),
                 torchvision.transforms.ToTensor(),
-                torchvision.transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+                torchvision.transforms.Normalize((0.486, 0.459, 0.408), (0.229, 0.224, 0.225))
             ])
         elif self.mode == 'gallery' or self.mode == 'query':
-            self.trans1 = torchvision.transforms.Compose([
+            self.trans_tuple = torchvision.transforms.Compose([
+                torchvision.transforms.ToTensor(),
+                torchvision.transforms.Normalize((0.486, 0.459, 0.408), (0.229, 0.224, 0.225))
+                ])
+            self.Lambda = torchvision.transforms.Lambda(
+                lambda crops: torch.stack([self.trans_tuple(crop) for crop in crops]))
+            self.trans = torchvision.transforms.Compose([
                 torchvision.transforms.Resize((288, 144)),
-                torchvision.transforms.FiveCrop((256, 128)),
-            ])
-            self.trans2 = torchvision.transforms.Compose([
-                torchvision.transforms.RandomHorizontalFlip(0),
-                torchvision.transforms.ToTensor(),
-                torchvision.transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
-            ])
-            self.trans3 = torchvision.transforms.Compose([
-                torchvision.transforms.RandomHorizontalFlip(1),
-                torchvision.transforms.ToTensor(),
-                torchvision.transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+                torchvision.transforms.TenCrop((256, 128)),
+                self.Lambda,
             ])
         else:
             raise ValueError('unsupport mode of {} for Market1501'. format(self.mode))
@@ -65,26 +63,45 @@ class Market1501(Dataset):
     def __getitem__(self, idx):
         img = cv2.imread(self.imgs[idx])
         img = Image.fromarray(img, 'RGB')
-        if self.mode == 'train':
-            img = self.trans(img)
-        elif self.mode == 'gallery' or self.mode == 'query':
-            img_crops = self.trans1(img)
-            img1 = torch.stack([self.trans2(crop) for crop in img_crops])
-            img2 = torch.stack([self.trans3(crop) for crop in img_crops])
-            img = torch.cat([img1, img2])
+        img = self.trans(img)
+        #  if self.mode == 'train':
+        #      img = self.trans(img)
+        #  elif self.mode == 'gallery' or self.mode == 'query':
+        #      img_crops = self.trans1(img)
+        #      img1 = torch.stack([self.trans2(crop) for crop in img_crops])
+        #      img2 = torch.stack([self.trans3(crop) for crop in img_crops])
+        #      img = torch.cat([img1, img2])
         return img, self.lb_ids[idx], self.lb_cams[idx]
 
 
 
 if __name__ == "__main__":
     ds = Market1501('./Market-1501-v15.09.15/bounding_box_train', mode = 'gallery')
-    im, lb = ds[14]
+    #  im, lb = ds[14]
+    #  print(im.shape)
+    #  #  cv2.imshow('img', im)
+    #  #  cv2.waitKey(0)
+    #  i = 0
+    #  for k, v in ds.lb_img_dict.items():
+    #      #  print(k, v)
+    #      i += 1
+    #      if i == 10: break
+
+    im = cv2.imread('Market-1501-v15.09.15/query/0530_c3s1_149183_00.jpg')
     print(im.shape)
-    #  cv2.imshow('img', im)
-    #  cv2.waitKey(0)
-    i = 0
-    for k, v in ds.lb_img_dict.items():
-        #  print(k, v)
-        i += 1
-        if i == 10: break
+    ToTensor = torchvision.transforms.ToTensor()
+    norm = torchvision.transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+    deal = torchvision.transforms.Compose([ToTensor, norm])
+    Lambda = torchvision.transforms.Lambda(
+        lambda crops: torch.stack([deal(crop) for crop in crops]))
+    im = Image.fromarray(im, 'RGB')
+    crop1 = torchvision.transforms.Resize((288, 144))
+    crop2 = torchvision.transforms.TenCrop((256, 128))
+    trans = torchvision.transforms.Compose([
+        crop1, crop2, Lambda
+        ])
+    im = trans(im)
+    print(im.shape)
+    print(len(im))
+    print(im[0].shape)
 

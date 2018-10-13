@@ -11,7 +11,6 @@ def pdist_torch(emb1, emb2):
     using gpu
     '''
     m, n = emb1.shape[0], emb2.shape[0]
-    print(m, n)
     emb1_pow = torch.pow(emb1, 2).sum(dim = 1, keepdim = True).expand(m, n)
     emb2_pow = torch.pow(emb2, 2).sum(dim = 1, keepdim = True).expand(n, m).t()
     dist_mtx = emb1_pow + emb2_pow
