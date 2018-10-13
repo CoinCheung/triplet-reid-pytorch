@@ -47,9 +47,11 @@ def train():
     selector = BatchHardTripletSelector()
 
     ## train
+    times = []
     count = 0
     while True:
-        ## TODO: use infinite dataloader, dont forget to shuffle
+        ## TODO:
+        ## 1. use infinite dataloader, dont forget to shuffle
         for it, (imgs, lbs, _) in enumerate(dl):
             st = time.time()
             net.train()
@@ -63,11 +65,14 @@ def train():
             loss.backward()
             optim.step()
 
+            times.append(time.time() - st)
+
             if count % 20 == 0 and it != 0:
                 loss_val = loss.detach().cpu().numpy()
-                time_interval = time.time() - st
-                logger.info('iter: {}, loss: {:4f}, lr: {:4f}, time: {:3f}'.format(count,
-                    loss_val, optim.lr, time_interval))
+                time_interval = sum(times) / len(times)
+                times = []
+                logger.info('iter: {}, loss: {:4f}, lr: {:4f}, time_avg: \
+                        {:3f}'.format(count, loss_val, optim.lr, time_interval))
 
             count += 1
             if count == 25000: break
