@@ -21,11 +21,11 @@ class BatchHardTripletSelector(object):
         dia_inds = np.diag_indices(num)
         lb_eqs = labels == labels.T
         lb_eqs[dia_inds] = False
-        dist_same = lb_eqs * dist_mtx
+        dist_same = dist_mtx.copy()
+        dist_same[lb_eqs == False] = -np.inf
         pos_idxs = np.argmax(dist_same, axis = 1)
-        lb_eqs = 1 - lb_eqs
-        lb_eqs[dia_inds] = False
-        dist_diff = lb_eqs * dist_mtx
+        dist_diff = dist_mtx.copy()
+        dist_diff[lb_eqs == True] = np.inf
         neg_idxs = np.argmin(dist_diff, axis = 1)
         pos = embeds[pos_idxs].contiguous().view(num, -1)
         neg = embeds[neg_idxs].contiguous().view(num, -1)

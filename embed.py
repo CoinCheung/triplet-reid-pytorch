@@ -85,6 +85,10 @@ def embed(args):
         embeddings.append(embd)
         label_ids.append(lb_ids)
         label_cams.append(lb_cams)
+        if not img.shape[0] == 32:
+            print('===='*10)
+            print('last batch')
+            print('===='*10)
     print('  ...   completed')
 
     embeddings = np.vstack(embeddings)
