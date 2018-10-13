@@ -5,6 +5,7 @@ import torch
 import torch.nn as nn
 import torchvision
 from torch.utils.data import DataLoader
+from torch.utils.data.sampler import SequentialSampler
 
 import pickle
 import numpy as np
@@ -63,7 +64,9 @@ def embed(args):
     ## load gallery dataset
     batchsize = 32
     ds = Market1501(args.data_pth, mode = args.ds_mode)
-    dl = DataLoader(ds, batch_size = batchsize, num_workers = 4)
+    sampler = SequentialSampler()
+    dl = DataLoader(ds, batch_size = batchsize, batch_sampler = sampler,
+            num_workers = 4)
 
     ## embedding samples
     logger.info('start embedding')

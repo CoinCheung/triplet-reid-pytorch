@@ -26,12 +26,10 @@ class Market1501(Dataset):
         self.lb_ids = [int(el.split('_')[0]) for el in self.imgs]
         self.lb_cams = [int(el.split('_')[1][1]) for el in self.imgs]
         self.imgs = [os.path.join(data_path, el) for el in self.imgs]
-        self.lb_img_dict = dict()
         if self.mode == 'train':
             self.trans = torchvision.transforms.Compose([
                 torchvision.transforms.Resize((288, 144)),
                 torchvision.transforms.RandomCrop((256, 128)),
-                #  torchvision.transforms.TenCrop((256, 128)),
                 torchvision.transforms.RandomHorizontalFlip(),
                 torchvision.transforms.ToTensor(),
                 torchvision.transforms.Normalize((0.486, 0.459, 0.408), (0.229, 0.224, 0.225))
@@ -52,8 +50,10 @@ class Market1501(Dataset):
             raise ValueError('unsupport mode of {} for Market1501'. format(self.mode))
 
         # useful for sampler
+        self.lb_img_dict = dict()
+        self.lb_ids_uniq = set(self.lb_ids)
         lb_array = np.array(self.lb_ids)
-        for lb in self.lb_ids:
+        for lb in self.lb_ids_uniq:
             idx = np.where(lb_array == lb)[0]
             self.lb_img_dict.update({lb: idx})
 
@@ -64,13 +64,6 @@ class Market1501(Dataset):
         img = cv2.imread(self.imgs[idx])
         img = Image.fromarray(img, 'RGB')
         img = self.trans(img)
-        #  if self.mode == 'train':
-        #      img = self.trans(img)
-        #  elif self.mode == 'gallery' or self.mode == 'query':
-        #      img_crops = self.trans1(img)
-        #      img1 = torch.stack([self.trans2(crop) for crop in img_crops])
-        #      img2 = torch.stack([self.trans3(crop) for crop in img_crops])
-        #      img = torch.cat([img1, img2])
         return img, self.lb_ids[idx], self.lb_cams[idx]
 
 

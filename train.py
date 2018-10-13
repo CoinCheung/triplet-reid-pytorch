@@ -14,7 +14,7 @@ import time
 from backbone import EmbedNetwork
 from loss import TripletLoss
 from selector import BatchHardTripletSelector
-from batch_sampler import RegularBatchSampler
+from batch_sampler import BatchSampler
 from datasets.Market1501 import Market1501
 from optimizer import AdamOptimWrapper
 
@@ -38,14 +38,14 @@ def train():
 
     ## dataloader
     ds = Market1501('datasets/Market-1501-v15.09.15/bounding_box_train', mode = 'train')
-    sampler = RegularBatchSampler(ds, 18, 4)
+    sampler = BatchSampler(ds, 18, 4)
     dl = DataLoader(ds, batch_sampler = sampler, num_workers = 4)
     selector = BatchHardTripletSelector()
 
     ## train
     count = 0
     while True:
-        ## TODO: use infinite dataloader
+        ## TODO: use infinite dataloader, dont forget to shuffle
         for it, (imgs, lbs, _) in enumerate(dl):
             st = time.time()
             net.train()
@@ -62,7 +62,7 @@ def train():
             if count % 20 == 0 and it != 0:
                 loss_val = loss.detach().cpu().numpy()
                 time_interval = time.time() - st
-                logger.info('iter:{}, loss:{:4f}, lr:{:4f}, time: {:3f}'.format(count,
+                logger.info('iter: {}, loss: {:4f}, lr: {:4f}, time: {:3f}'.format(count,
                     loss_val, optim.lr, time_interval))
 
             count += 1

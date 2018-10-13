@@ -6,10 +6,14 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torchvision
+import torch.utils.model_zoo as model_zoo
+
 
 '''
 As goes with pytorch pretrained models, inception_v3 requires the input image sizes to be (299, 299), while input image sizes for other pretrained models to be (224, 224)
 '''
+
+param_url = 'https://download.pytorch.org/models/resnet50-19c8e357.pth'
 
 
 class DenseNormReLU(nn.Module):
@@ -29,8 +33,9 @@ class DenseNormReLU(nn.Module):
 class EmbedNetwork(nn.Module):
     def __init__(self, dims = 128, pretrained_base = True, *args, **kwargs):
         super(EmbedNetwork, self).__init__(*args, **kwargs)
+        self.pretrained_base = pretrained_base
 
-        resnet50 = torchvision.models.resnet50(pretrained_base)
+        resnet50 = torchvision.models.resnet50()
         self.conv1 = resnet50.conv1
         self.bn1 = resnet50.bn1
         self.relu = resnet50.relu
@@ -43,6 +48,12 @@ class EmbedNetwork(nn.Module):
         #  self.base = torchvision.models.inception_v3(pretrained_base)
         self.fc_head = DenseNormReLU(in_feats = 2048, out_feats = 1024)
         self.embed = nn.Linear(in_features = 1024, out_features = dims)
+
+        if self.pretrained_base:
+            state = model_zoo.load_url(param_url)
+            for k, v in state.items():
+                if k[:3] == 'fc': continue
+                self.state_dict().update({k: v})
 
     def forward(self, x):
         x = self.conv1(x)
@@ -66,7 +77,7 @@ class EmbedNetwork(nn.Module):
 
 if __name__ == "__main__":
     embed_net = EmbedNetwork(pretrained_base = True)
-    print(embed_net)
+    #  print(embed_net)
     #  #  in_tensor = torch.randn((15, 3, 299, 299))
     #  in_tensor = torch.randn((15, 3, 224, 224))
     #  #  print(in_tensor.shape)
@@ -80,9 +91,11 @@ if __name__ == "__main__":
     #  print(embed_net.base[0].weight.shape)
     #  print(net.conv1.weight.shape)
 
-    for i, ly in enumerate(embed_net.base):
-        print(ly.__class__.__name__)
-        if i > 4: break
-        #  break
+    #  print(state_init.keys())
+
+    k = list(embed_net.state_dict().keys())[1]
+    print(embed_net.state_dict()[k])
+    embed_net.state_dict()[k][1] = 1000.
+    print(embed_net.state_dict()[k])
 
 
