@@ -21,6 +21,10 @@ from optimizer import AdamOptimWrapper
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 
+## TODO:
+## 1. see training scheme of 300 epochs (change lr each epoch instead of iter)
+## 2. see embedding length of 2048
+
 
 def train():
     ## logging

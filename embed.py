@@ -64,31 +64,41 @@ def embed(args):
     ## load gallery dataset
     batchsize = 32
     ds = Market1501(args.data_pth, mode = args.ds_mode)
-    sampler = SequentialSampler()
-    dl = DataLoader(ds, batch_size = batchsize, batch_sampler = sampler,
-            num_workers = 4)
+    sampler = SequentialSampler(ds)
+    dl = DataLoader(ds, sampler = sampler, num_workers = 4)
+    diter = iter(dl)
 
     ## embedding samples
     logger.info('start embedding')
-    all_iter_nums = len(ds) // batchsize
+    all_iter_nums = len(ds) // batchsize + 1
     embeddings = []
     label_ids = []
     label_cams = []
-    for it, (img, lb_ids, lb_cams) in enumerate(dl):
+    it = 0
+    # TODO: refine this dataloader and make this faster, better get rid of is_finish
+    is_finish = False
+    while True:
+        it += 1
+        if is_finish: break
+        # get one batch data
+        imgs = []
+        for i in range(batchsize):
+            try:
+                img, lb_id, lb_cam = next(diter)
+                label_ids.append(lb_id)
+                label_cams.append(lb_cam)
+                imgs.append(img)
+            except StopIteration:
+                is_finish = True
+                break
+        imgs = torch.cat(imgs)
+
         print('\r=======>  processing iter {} / {}'.format(it, all_iter_nums), end = '', flush = True)
-        img = img.cuda()
-        _, _, C, H, W = img.shape
-        img = img.contiguous().view(-1, C, H, W)
-        lb_ids = lb_ids.contiguous().detach().numpy()
-        lb_cams = lb_cams.contiguous().detach().numpy()
-        embd = model(img).detach().cpu().numpy()
+        imgs = imgs.cuda()
+        _, _, C, H, W = imgs.shape
+        imgs = imgs.contiguous().view(-1, C, H, W)
+        embd = model(imgs).detach().cpu().numpy()
         embeddings.append(embd)
-        label_ids.append(lb_ids)
-        label_cams.append(lb_cams)
-        if not img.shape[0] == 32:
-            print('===='*10)
-            print('last batch')
-            print('===='*10)
     print('  ...   completed')
 
     embeddings = np.vstack(embeddings)

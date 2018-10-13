@@ -27,10 +27,10 @@ class AdamOptimWrapper(object):
         self.optim = torch.optim.Adam(params,
                 lr = self.base_lr,
                 weight_decay = self.wd)
-        #  self.lr_inc = 0.001 ** (1.0 / (self.t1 - self.t0))
 
 
     def step(self):
+        # TODO: try remove beta modification
         self.step_count += 1
         self.optim.step()
         # adjust optimizer parameters
