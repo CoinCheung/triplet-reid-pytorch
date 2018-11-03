@@ -8,6 +8,7 @@ import numpy as np
 import sys
 import logging
 import argparse
+from tqdm import tqdm
 from sklearn.metrics import average_precision_score
 
 from utils import pdist_np as pdist
@@ -32,6 +33,13 @@ def parse_args():
             default = './res/emb_query.pkl',
             help = 'path to embeddings of query dataset'
             )
+    parse.add_argument(
+            '--cmc_rank',
+            dest = 'cmc_rank',
+            type = int,
+            default = 1,
+            help = 'path to embeddings of query dataset'
+            )
 
     return parse.parse_args()
 
@@ -41,11 +49,6 @@ def evaluate(args):
     FORMAT = '%(levelname)s %(filename)s:%(lineno)4d: %(message)s'
     logging.basicConfig(level=logging.INFO, format=FORMAT, stream=sys.stdout)
     logger = logging.getLogger(__name__)
-
-    ## check scikit-learn version
-    import sklearn
-    assert sklearn.__version__ == '0.18.1', 'eval.py require scikit-learn version to be 0.18.1, but you got a version of {}'.format(sklearn.__version__)
-
 
     ## load embeddings
     logger.info('loading gallery embeddings')
@@ -58,46 +61,43 @@ def evaluate(args):
         emb_query, lb_ids_query, lb_cams_query = query_dict['embeddings'], query_dict['label_ids'], query_dict['label_cams']
 
     ## compute and clean distance matrix
-    ### TODO: pick out useless code and comments
     dist_mtx = pdist(emb_query, emb_gallery)
-    # find images in query set that have identical cam id and pid overlaps with gallery set (nxm matrix)
-    lb_ids_matchs = lb_ids_query[:, np.newaxis] != lb_ids_gallery
-    lb_cams_matchs = lb_cams_query[:, np.newaxis] != lb_cams_gallery
-    query_ovlp = np.logical_or(lb_ids_matchs, lb_cams_matchs) # false = invalida
-    # set gallery images whose pids are -1 to invalid
-    n_qu, n_ga = dist_mtx.shape
-    invalid_gallery = np.tile((lb_ids_gallery != -1), n_qu).reshape(n_qu, n_ga) # false = invalid
-    invalid_mask = np.logical_and(query_ovlp, invalid_gallery) # false = invalid
-    invalid_mask = np.logical_not(invalid_mask)
-    dist_mtx[invalid_mask] = np.inf
-    lb_ids_matchs[invalid_gallery] = False
-
-    ## compute mAP
-    # change distance into score
+    n_q, n_g = dist_mtx.shape
     indices = np.argsort(dist_mtx, axis = 1)
-    #  matchs = lb_ids_gallery[indices] == lb_ids_query[:, np.newaxis]
-    matchs = lb_ids_gallery == lb_ids_query[:, np.newaxis]
-    matchs[invalid_mask] = False
+    matches = lb_ids_gallery[indices] == lb_ids_query[:, np.newaxis]
+    matches = matches.astype(np.int32)
+    all_aps = []
+    all_cmcs = []
+    logger.info('starting evaluating')
+    for qidx in tqdm(range(n_q)):
+        qpid = lb_ids_query[qidx]
+        qcam = lb_cams_query[qidx]
 
-    #  lb_ids_matchs = lb_ids_query[:, np.newaxis] == lb_ids_gallery
-    #  lb_ids_matchs[invalid_gallery] = False
-    scores = 1.0 / (1 + dist_mtx)
+        order = indices[qidx]
+        pid_diff = lb_ids_gallery[order] != qpid
+        cam_diff = lb_cams_gallery[order] != qcam
+        keep = np.logical_or(pid_diff, cam_diff)
+        match = matches[qidx][keep]
 
-    aps = []
-    for i in range(n_qu):
-        #  score = 1.0 / (1 + dist_mtx[i])
-        if np.sum(query_ovlp[i]) == 0:
-            logger.info('invalid query')
-            continue
-        ap = average_precision_score(matchs[i], scores[i])
-        #  ap = average_precision_score(lb_ids_matchs[i], score)
-        if np.isnan(ap):
-            logger.info('having an ap of Nan, neglecting')
-            continue
-        aps.append(ap)
-    mAP = sum(aps) / len(aps)
+        if not np.any(match): continue
 
-    print("map is: {}".format(mAP))
+        cmc = match.cumsum()
+        cmc[cmc > 1] = 1
+        all_cmcs.append(cmc[:args.cmc_rank])
+
+        num_real = match.sum()
+        match_cum = match.cumsum()
+        match_cum = [el / (1.0 + i) for i, el in enumerate(match_cum)]
+        match_cum = np.array(match_cum) * match
+        ap = match_cum.sum() / num_real
+        all_aps.append(ap)
+
+    assert len(all_aps) > 0, "NO QUERY MATCHED"
+    mAP = sum(all_aps) / len(all_aps)
+    all_cmcs = np.array(all_cmcs, dtype = np.float32)
+    cmc = np.mean(all_cmcs, axis = 0)
+
+    print('mAP is: {}, cmc is: {}'.format(mAP, cmc))
 
 
 if __name__ == '__main__':

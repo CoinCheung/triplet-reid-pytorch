@@ -27,14 +27,16 @@ class BatchSampler(Sampler):
         self.labels_uniq = np.array(list(dataset.lb_ids_uniq))
         self.len = len(dataset) // self.batch_size
         self.lb_img_dict = dataset.lb_img_dict
+        self.iter_num = len(self.labels_uniq) // self.n_class
 
     def __iter__(self):
-        count = 0
+        curr_p = 0
         np.random.shuffle(self.labels_uniq)
         for k, v in self.lb_img_dict.items():
             random.shuffle(self.lb_img_dict[k])
-        while count <= self.len:
-            label_batch = np.random.choice(self.labels_uniq, self.n_class, replace = False)
+        for i in range(self.iter_num):
+            label_batch = self.labels_uniq[curr_p: curr_p + self.n_class]
+            curr_p += self.n_class
             idx = []
             for lb in label_batch:
                 if len(self.lb_img_dict[lb]) > self.n_num:
@@ -43,12 +45,14 @@ class BatchSampler(Sampler):
                 else:
                     idx_smp = np.random.choice(self.lb_img_dict[lb],
                             self.n_num, replace = True)
-                idx.extend(list(idx_smp))
+                idx.extend(idx_smp.tolist())
+                for nu in idx:
+                    if nu >= 12936:
+                        print(idx)
             yield idx
-            count += 1
 
     def __len__(self):
-        return len(dataset) // self.batch_size
+        return self.iter_num
 
 
 if __name__ == "__main__":
@@ -57,8 +61,8 @@ if __name__ == "__main__":
     sampler = BatchSampler(ds, 5, 4)
     dl = DataLoader(ds, batch_sampler = sampler, num_workers = 4)
 
-    for i, (ims, lbs) in enumerate(dl):
+    for i, (ims, lbs, _) in enumerate(dl):
         print(ims.shape)
         print(lbs.shape)
-        #  if i == 4: break
+    print(len(list(ds.lb_ids_uniq)))
 

@@ -5,7 +5,6 @@ import torch
 import torch.nn as nn
 import torchvision
 from torch.utils.data import DataLoader
-from torch.utils.data.sampler import SequentialSampler
 
 import pickle
 import numpy as np
@@ -27,21 +26,21 @@ def parse_args():
             dest = 'ds_mode',
             type = str,
             required = True,
-            help = 'which sub-category of dataset Market1501 is to be used'
+            help = 'which sub-category of dataset Market1501 is to be used',
             )
     parse.add_argument(
             '--store_pth',
             dest = 'store_pth',
             type = str,
             required = True,
-            help = 'path that the embeddings are stored: e.g.: ./res/emb.pkl'
+            help = 'path that the embeddings are stored: e.g.: ./res/emb.pkl',
             )
     parse.add_argument(
             '--data_pth',
             dest = 'data_pth',
             type = str,
             required = True,
-            help = 'path that the raw images are stored'
+            help = 'path that the raw images are stored',
             )
 
     return parse.parse_args()
@@ -64,9 +63,8 @@ def embed(args):
     ## load gallery dataset
     batchsize = 32
     ds = Market1501(args.data_pth, mode = args.ds_mode)
-    sampler = SequentialSampler(ds)
-    dl = DataLoader(ds, sampler = sampler, num_workers = 4)
-    diter = iter(dl)
+    dl = DataLoader(ds, batch_size = batchsize, drop_last = False, num_workers = 4)
+
 
     ## embedding samples
     logger.info('start embedding')
@@ -74,41 +72,23 @@ def embed(args):
     embeddings = []
     label_ids = []
     label_cams = []
-    it = 0
-    # TODO: refine this dataloader and make this faster, better get rid of is_finish
-    is_finish = False
-    while True:
-        it += 1
-        if is_finish: break
-        # get one batch data
-        imgs = []
-        for i in range(batchsize):
-            try:
-                img, lb_id, lb_cam = next(diter)
-                label_ids.append(lb_id)
-                label_cams.append(lb_cam)
-                imgs.append(img)
-            except StopIteration:
-                is_finish = True
-                break
-        imgs = torch.cat(imgs)
-
-        print('\r=======>  processing iter {} / {}'.format(it, all_iter_nums), end = '', flush = True)
-        imgs = imgs.cuda()
-        _, _, C, H, W = imgs.shape
-        imgs = imgs.contiguous().view(-1, C, H, W)
-        embd = model(imgs).detach().cpu().numpy()
-        embeddings.append(embd)
+    for it, (img, lb_id, lb_cam) in enumerate(dl):
+        print('\r=======>  processing iter {} / {}'.format(it, all_iter_nums),
+                end = '', flush = True)
+        label_ids.append(lb_id)
+        label_cams.append(lb_cam)
+        embds = []
+        for im in img:
+            im = im.cuda()
+            embd = model(im).detach().cpu().numpy()
+            embds.append(embd)
+        embed = sum(embds) / len(embds)
+        embeddings.append(embed)
     print('  ...   completed')
 
     embeddings = np.vstack(embeddings)
     label_ids = np.hstack(label_ids)
     label_cams = np.hstack(label_cams)
-
-    ## aggregate embeddings
-    logger.info('aggregating embeddings')
-    N, L = embeddings.shape
-    embeddings = embeddings.reshape(int(N / 10), 10, L).mean(axis = 1)
 
     ## dump results
     logger.info('dump embeddings')

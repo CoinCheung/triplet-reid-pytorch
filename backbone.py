@@ -50,10 +50,20 @@ class EmbedNetwork(nn.Module):
         self.embed = nn.Linear(in_features = 1024, out_features = dims)
 
         if self.pretrained_base:
-            state = model_zoo.load_url(param_url)
-            for k, v in state.items():
-                if k[:3] == 'fc': continue
-                self.state_dict().update({k: v})
+            new_state = model_zoo.load_url(param_url)
+            state_dict = self.state_dict()
+            for k, v in new_state.items():
+                if 'fc' in k: continue
+                state_dict.update({k: v})
+            self.load_state_dict(state_dict)
+
+        for el in self.fc_head.children():
+            if isinstance(el, nn.Linear):
+                nn.init.kaiming_normal_(el.weight, a=1)
+                nn.init.constant_(el.bias, 0)
+
+        nn.init.kaiming_normal_(self.embed.weight, a=1)
+        nn.init.constant_(self.embed.bias, 0)
 
     def forward(self, x):
         x = self.conv1(x)
@@ -66,8 +76,7 @@ class EmbedNetwork(nn.Module):
         x = self.layer3(x)
         x = self.layer4(x)
 
-        _, _, h, w = x.shape
-        x = F.avg_pool2d(x, (h, w))
+        x = F.avg_pool2d(x, x.size()[2:])
         x = x.contiguous().view(-1, 2048)
         x = self.fc_head(x)
         x = self.embed(x)
@@ -93,9 +102,8 @@ if __name__ == "__main__":
 
     #  print(state_init.keys())
 
-    k = list(embed_net.state_dict().keys())[1]
-    print(embed_net.state_dict()[k])
-    embed_net.state_dict()[k][1] = 1000.
-    print(embed_net.state_dict()[k])
+    in_ten = torch.randn(32, 3, 256, 128)
+    out = embed_net(in_ten)
+    print(out.shape)
 
 

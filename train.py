@@ -71,8 +71,7 @@ def train():
                 loss_val = loss.detach().cpu().numpy()
                 time_interval = sum(times) / len(times)
                 times = []
-                logger.info('iter: {}, loss: {:4f}, lr: {:4f}, time_avg: \
-                        {:3f}'.format(count, loss_val, optim.lr, time_interval))
+                logger.info('iter: {}, loss: {:4f}, lr: {:4f}, time_avg: {:3f}'.format(count, loss_val, optim.lr, time_interval))
 
             count += 1
             if count == 25000: break

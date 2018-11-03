@@ -5,6 +5,7 @@
 import os
 import torch
 import torchvision
+import torchvision.transforms as transforms
 from torch.utils.data import Dataset
 import cv2
 import numpy as np
@@ -27,23 +28,23 @@ class Market1501(Dataset):
         self.lb_cams = [int(el.split('_')[1][1]) for el in self.imgs]
         self.imgs = [os.path.join(data_path, el) for el in self.imgs]
         if self.mode == 'train':
-            self.trans = torchvision.transforms.Compose([
-                torchvision.transforms.Resize((288, 144)),
-                torchvision.transforms.RandomCrop((256, 128)),
-                torchvision.transforms.RandomHorizontalFlip(),
-                torchvision.transforms.ToTensor(),
-                torchvision.transforms.Normalize((0.486, 0.459, 0.408), (0.229, 0.224, 0.225))
+            self.trans = transforms.Compose([
+                transforms.Resize((288, 144)),
+                transforms.RandomCrop((256, 128)),
+                transforms.RandomHorizontalFlip(),
+                transforms.ToTensor(),
+                transforms.Normalize((0.486, 0.459, 0.408), (0.229, 0.224, 0.225))
             ])
         elif self.mode == 'gallery' or self.mode == 'query':
-            self.trans_tuple = torchvision.transforms.Compose([
-                torchvision.transforms.ToTensor(),
-                torchvision.transforms.Normalize((0.486, 0.459, 0.408), (0.229, 0.224, 0.225))
+            self.trans_tuple = transforms.Compose([
+                transforms.ToTensor(),
+                transforms.Normalize((0.486, 0.459, 0.408), (0.229, 0.224, 0.225))
                 ])
-            self.Lambda = torchvision.transforms.Lambda(
-                lambda crops: torch.stack([self.trans_tuple(crop) for crop in crops]))
-            self.trans = torchvision.transforms.Compose([
-                torchvision.transforms.Resize((288, 144)),
-                torchvision.transforms.TenCrop((256, 128)),
+            self.Lambda = transforms.Lambda(
+                lambda crops: [self.trans_tuple(crop) for crop in crops])
+            self.trans = transforms.Compose([
+                transforms.Resize((288, 144)),
+                transforms.TenCrop((256, 128)),
                 self.Lambda,
             ])
         else:
@@ -61,8 +62,7 @@ class Market1501(Dataset):
         return len(self.imgs)
 
     def __getitem__(self, idx):
-        img = cv2.imread(self.imgs[idx])
-        img = Image.fromarray(img, 'RGB')
+        img = Image.open(self.imgs[idx])
         img = self.trans(img)
         return img, self.lb_ids[idx], self.lb_cams[idx]
 
@@ -98,3 +98,5 @@ if __name__ == "__main__":
     print(len(im))
     print(im[0].shape)
 
+    print(len(ds))
+    print(ds[12935])
