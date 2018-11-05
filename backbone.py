@@ -45,7 +45,6 @@ class EmbedNetwork(nn.Module):
         self.layer3 = resnet50.layer3
         self.layer4 = resnet50.layer4
 
-        #  self.base = torchvision.models.inception_v3(pretrained_base)
         self.fc_head = DenseNormReLU(in_feats = 2048, out_feats = 1024)
         self.embed = nn.Linear(in_features = 1024, out_features = dims)
 
@@ -86,21 +85,6 @@ class EmbedNetwork(nn.Module):
 
 if __name__ == "__main__":
     embed_net = EmbedNetwork(pretrained_base = True)
-    #  print(embed_net)
-    #  #  in_tensor = torch.randn((15, 3, 299, 299))
-    #  in_tensor = torch.randn((15, 3, 224, 224))
-    #  #  print(in_tensor.shape)
-    #  embd = embed_net(in_tensor)
-    #  print(embd.shape)
-    #  print(embed_net.state_dict().keys())
-    #  #  print(embed_net.base[0].weight)
-    #  net = torchvision.models.resnet50(False)
-    #  #  print(net.conv1.weight)
-    #  print(torch.sum(embed_net.base[0].weight == net.conv1.weight))
-    #  print(embed_net.base[0].weight.shape)
-    #  print(net.conv1.weight.shape)
-
-    #  print(state_init.keys())
 
     in_ten = torch.randn(32, 3, 256, 128)
     out = embed_net(in_ten)

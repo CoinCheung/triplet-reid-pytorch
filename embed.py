@@ -22,13 +22,6 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 def parse_args():
     parse = argparse.ArgumentParser()
     parse.add_argument(
-            '--dataset_mode',
-            dest = 'ds_mode',
-            type = str,
-            required = True,
-            help = 'which sub-category of dataset Market1501 is to be used',
-            )
-    parse.add_argument(
             '--store_pth',
             dest = 'store_pth',
             type = str,
@@ -49,7 +42,7 @@ def parse_args():
 
 def embed(args):
     ## logging
-    FORMAT = '%(levelname)s %(filename)s:%(lineno)4d: %(message)s'
+    FORMAT = '%(levelname)s %(filename)s:%(lineno)d: %(message)s'
     logging.basicConfig(level=logging.INFO, format=FORMAT, stream=sys.stdout)
     logger = logging.getLogger(__name__)
 
@@ -62,7 +55,7 @@ def embed(args):
 
     ## load gallery dataset
     batchsize = 32
-    ds = Market1501(args.data_pth, mode = args.ds_mode)
+    ds = Market1501(args.data_pth, is_train = False)
     dl = DataLoader(ds, batch_size = batchsize, drop_last = False, num_workers = 4)
 
 
@@ -96,8 +89,7 @@ def embed(args):
     with open(args.store_pth, 'wb') as fw:
         pickle.dump(embd_res, fw)
 
-    logger.info('everything finished')
-
+    logger.info('embedding finished')
 
 
 if __name__ == '__main__':
