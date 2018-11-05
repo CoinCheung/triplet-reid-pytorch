@@ -7,3 +7,8 @@
 *.a
 /datasets/__pycache__/
 /__pycache__/
+<<<<<<< HEAD
+=======
+train.log
+emb_eval.sh
+>>>>>>> dev

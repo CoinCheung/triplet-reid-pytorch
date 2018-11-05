@@ -32,8 +32,5 @@ class TripletLoss(nn.Module):
         return loss
 
 
-
-
 if __name__ == '__main__':
-    bh = BatchHardTripletSelector()
-    bh('ddddd')
+    pass
