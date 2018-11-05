@@ -76,7 +76,9 @@ def evaluate(args):
         order = indices[qidx]
         pid_diff = lb_ids_gallery[order] != qpid
         cam_diff = lb_cams_gallery[order] != qcam
+        useful = lb_ids_gallery[order] != -1
         keep = np.logical_or(pid_diff, cam_diff)
+        keep = np.logical_and(keep, useful)
         match = matches[qidx][keep]
 
         if not np.any(match): continue

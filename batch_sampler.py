@@ -64,5 +64,7 @@ if __name__ == "__main__":
     for i, (ims, lbs, _) in enumerate(dl):
         print(ims.shape)
         print(lbs.shape)
+        print(lbs)
+        break
     print(len(list(ds.lb_ids_uniq)))
 

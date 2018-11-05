@@ -13,10 +13,11 @@ import time
 
 from backbone import EmbedNetwork
 from loss import TripletLoss
-from selector import BatchHardTripletSelector
+from triplet_selector import BatchHardTripletSelector
 from batch_sampler import BatchSampler
 from datasets.Market1501 import Market1501
 from optimizer import AdamOptimWrapper
+from logger import logger
 
 
 torch.multiprocessing.set_sharing_strategy('file_system')
@@ -27,12 +28,9 @@ torch.multiprocessing.set_sharing_strategy('file_system')
 
 
 def train():
-    ## logging
-    FORMAT = '%(levelname)s %(filename)s:%(lineno)4d: %(message)s'
-    logging.basicConfig(level=logging.INFO, format=FORMAT, stream=sys.stdout)
-    logger = logging.getLogger(__name__)
 
     ## model and loss
+    logger.info('setting up backbone model and loss')
     net = EmbedNetwork().cuda()
     net = nn.DataParallel(net)
     triplet_loss = TripletLoss(margin = None).cuda() # no margin means soft-margin

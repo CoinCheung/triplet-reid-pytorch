@@ -5,11 +5,8 @@
 import torch
 import logging
 import sys
+from logger import logger
 
-
-FORMAT = '%(levelname)s %(filename)s:%(lineno)4d: %(message)s'
-logging.basicConfig(level=logging.INFO, format=FORMAT, stream=sys.stdout)
-logger = logging.getLogger(__name__)
 
 
 class AdamOptimWrapper(object):
@@ -41,10 +38,11 @@ class AdamOptimWrapper(object):
             logger.info('==> changing adam betas from {} to {}'.format(betas_old, betas_new))
             logger.info('==> start droping lr exponentially')
         elif self.t0 < self.step_count < self.t1:
-            lr = self.base_lr * (0.001 ** (float(self.step_count + 1 - self.t0) / (self.t1 + 1 - self.t0)))
+            lr = self.base_lr * (0.001 ** ((self.step_count + 1.0 - self.t0) / (self.t1 + 1.0 - self.t0)))
             #  self.learning_rate = self.learning_rate * self.lr_inc
             for pg in self.optim.param_groups:
                 pg['lr'] = lr
+            self.optim.defaults['lr'] = lr
 
     def zero_grad(self):
         self.optim.zero_grad()
@@ -52,4 +50,3 @@ class AdamOptimWrapper(object):
     @property
     def lr(self):
         return self.optim.param_groups[0]['lr']
-

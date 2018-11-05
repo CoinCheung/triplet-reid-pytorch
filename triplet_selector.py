@@ -25,6 +25,7 @@ class BatchHardTripletSelector(object):
         dist_same[lb_eqs == False] = -np.inf
         pos_idxs = np.argmax(dist_same, axis = 1)
         dist_diff = dist_mtx.copy()
+        lb_eqs[dia_inds] = True
         dist_diff[lb_eqs == True] = np.inf
         neg_idxs = np.argmin(dist_diff, axis = 1)
         pos = embeds[pos_idxs].contiguous().view(num, -1)
@@ -34,4 +35,7 @@ class BatchHardTripletSelector(object):
 
 
 if __name__ == '__main__':
-    pass
+    embds = torch.randn(10, 128)
+    labels = torch.tensor([0,1,2,2,0,1,2,1,1,0])
+    selector = BatchHardTripletSelector()
+    anchor, pos, neg = selector(embds, labels)
