@@ -36,6 +36,7 @@ def train():
     triplet_loss = TripletLoss(margin = None).cuda() # no margin means soft-margin
 
     ## optimizer
+    logger.info('creating optimizer')
     optim = AdamOptimWrapper(net.parameters(), lr = 3e-4, wd = 5e-4, t0 = 15000, t1 = 25000)
 
     ## dataloader
@@ -46,6 +47,7 @@ def train():
     diter = iter(dl)
 
     ## train
+    logger.info('start training ...')
     loss_avg = []
     count = 0
     t_start = time.time()
@@ -72,7 +74,7 @@ def train():
             loss_avg = sum(loss_avg) / len(loss_avg)
             t_end = time.time()
             time_interval = t_end - t_start
-            logger.info('iter: {}, loss: {:4f}, lr: {:4f}, time_avg: {:3f}'.format(count, loss_avg, optim.lr, time_interval))
+            logger.info('iter: {}, loss: {:4f}, lr: {:4f}, time: {:3f}'.format(count, loss_avg, optim.lr, time_interval))
             loss_avg = []
             t_start = t_end
 
@@ -85,7 +87,6 @@ def train():
     torch.save(net.module.state_dict(), './res/model.pkl')
 
     logger.info('everything finished')
-
 
 
 if __name__ == '__main__':
