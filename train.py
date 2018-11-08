@@ -21,10 +21,12 @@ from optimizer import AdamOptimWrapper
 from logger import logger
 
 
-torch.multiprocessing.set_sharing_strategy('file_system')
-if not os.path.exists('./res'): os.makedirs('./res')
 
 def train():
+    ## setup
+    torch.multiprocessing.set_sharing_strategy('file_system')
+    if not os.path.exists('./res'): os.makedirs('./res')
+
     ## model and loss
     logger.info('setting up backbone model and loss')
     net = EmbedNetwork().cuda()
