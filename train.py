@@ -10,6 +10,7 @@ import sys
 import os
 import logging
 import time
+import itertools
 
 from backbone import EmbedNetwork
 from loss import TripletLoss
@@ -20,14 +21,11 @@ from optimizer import AdamOptimWrapper
 from logger import logger
 
 
-torch.multiprocessing.set_sharing_strategy('file_system')
-
-## TODO:
-## 1. see training scheme of 300 epochs (change lr each epoch instead of iter)
-## 2. see embedding length of 2048
-
 
 def train():
+    ## setup
+    torch.multiprocessing.set_sharing_strategy('file_system')
+    if not os.path.exists('./res'): os.makedirs('./res')
 
     ## model and loss
     logger.info('setting up backbone model and loss')
@@ -36,51 +34,56 @@ def train():
     triplet_loss = TripletLoss(margin = None).cuda() # no margin means soft-margin
 
     ## optimizer
-    optim = AdamOptimWrapper(net.parameters(), lr = 3e-4, wd = 5e-4, t0 = 15000, t1 = 25000)
+    logger.info('creating optimizer')
+    optim = AdamOptimWrapper(net.parameters(), lr = 3e-4, wd = 0, t0 = 15000, t1 = 25000)
 
     ## dataloader
-    ds = Market1501('datasets/Market-1501-v15.09.15/bounding_box_train', mode = 'train')
+    selector = BatchHardTripletSelector()
+    ds = Market1501('datasets/Market-1501-v15.09.15/bounding_box_train', is_train = True)
     sampler = BatchSampler(ds, 18, 4)
     dl = DataLoader(ds, batch_sampler = sampler, num_workers = 4)
-    selector = BatchHardTripletSelector()
+    diter = iter(dl)
 
     ## train
-    times = []
+    logger.info('start training ...')
+    loss_avg = []
     count = 0
+    t_start = time.time()
     while True:
-        ## TODO:
-        ## 1. use infinite dataloader, dont forget to shuffle
-        for it, (imgs, lbs, _) in enumerate(dl):
-            st = time.time()
-            net.train()
-            imgs = imgs.cuda()
-            lbs = lbs.cuda()
-            embds = net(imgs)
-            anchor, positives, negatives = selector(embds, lbs)
+        try:
+            imgs, lbs, _ = next(diter)
+        except StopIteration:
+            diter = iter(dl)
+            imgs, lbs, _ = next(diter)
 
-            loss = triplet_loss(anchor, positives, negatives)
-            optim.zero_grad()
-            loss.backward()
-            optim.step()
+        net.train()
+        imgs = imgs.cuda()
+        lbs = lbs.cuda()
+        embds = net(imgs)
+        anchor, positives, negatives = selector(embds, lbs)
 
-            times.append(time.time() - st)
-            if count % 20 == 0 and it != 0:
-                loss_val = loss.detach().cpu().numpy()
-                time_interval = sum(times) / len(times)
-                times = []
-                logger.info('iter: {}, loss: {:4f}, lr: {:4f}, time_avg: {:3f}'.format(count, loss_val, optim.lr, time_interval))
+        loss = triplet_loss(anchor, positives, negatives)
+        optim.zero_grad()
+        loss.backward()
+        optim.step()
 
-            count += 1
-            if count == 25000: break
+        loss_avg.append(loss.detach().cpu().numpy())
+        if count % 20 == 0 and count != 0:
+            loss_avg = sum(loss_avg) / len(loss_avg)
+            t_end = time.time()
+            time_interval = t_end - t_start
+            logger.info('iter: {}, loss: {:4f}, lr: {:4f}, time: {:3f}'.format(count, loss_avg, optim.lr, time_interval))
+            loss_avg = []
+            t_start = t_end
+
+        count += 1
         if count == 25000: break
 
     ## dump model
-    if not os.path.exists('./res'): os.makedirs('./res')
     logger.info('saving trained model')
     torch.save(net.module.state_dict(), './res/model.pkl')
 
     logger.info('everything finished')
-
 
 
 if __name__ == '__main__':

@@ -9,11 +9,9 @@ import sys
 import logging
 import argparse
 from tqdm import tqdm
-from sklearn.metrics import average_precision_score
 
 from utils import pdist_np as pdist
 
-## TODO: change args_parser back to required
 
 def parse_args():
     parse = argparse.ArgumentParser()
@@ -21,7 +19,6 @@ def parse_args():
             '--gallery_embs',
             dest = 'gallery_embs',
             type = str,
-            #  required = True,
             default = './res/emb_gallery.pkl',
             help = 'path to embeddings of gallery dataset'
             )
@@ -29,7 +26,6 @@ def parse_args():
             '--query_embs',
             dest = 'query_embs',
             type = str,
-            #  required = True,
             default = './res/emb_query.pkl',
             help = 'path to embeddings of query dataset'
             )
@@ -46,7 +42,7 @@ def parse_args():
 
 def evaluate(args):
     ## logging
-    FORMAT = '%(levelname)s %(filename)s:%(lineno)4d: %(message)s'
+    FORMAT = '%(levelname)s %(filename)s:%(lineno)d: %(message)s'
     logging.basicConfig(level=logging.INFO, format=FORMAT, stream=sys.stdout)
     logger = logging.getLogger(__name__)
 
@@ -68,7 +64,7 @@ def evaluate(args):
     matches = matches.astype(np.int32)
     all_aps = []
     all_cmcs = []
-    logger.info('starting evaluating')
+    logger.info('starting evaluating ...')
     for qidx in tqdm(range(n_q)):
         qpid = lb_ids_query[qidx]
         qcam = lb_cams_query[qidx]

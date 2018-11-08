@@ -3,7 +3,10 @@
 
 
 import torch
+import logging
+import sys
 from logger import logger
+
 
 
 class AdamOptimWrapper(object):
@@ -11,7 +14,7 @@ class AdamOptimWrapper(object):
     A wrapper of Adam optimizer which allows to adjust the optimizing parameters
     according to the stategy presented in the paper
     '''
-    def __init__(self, params, lr, wd, t0, t1, *args, **kwargs):
+    def __init__(self, params, lr, wd=0, t0=15000, t1=25000, *args, **kwargs):
         super(AdamOptimWrapper, self).__init__(*args, **kwargs)
         self.base_lr = lr
         self.wd = wd
@@ -24,7 +27,6 @@ class AdamOptimWrapper(object):
 
 
     def step(self):
-        # TODO: try remove beta modification
         self.step_count += 1
         self.optim.step()
         # adjust optimizer parameters
@@ -36,7 +38,6 @@ class AdamOptimWrapper(object):
             logger.info('==> start droping lr exponentially')
         elif self.t0 < self.step_count < self.t1:
             lr = self.base_lr * (0.001 ** ((self.step_count + 1.0 - self.t0) / (self.t1 + 1.0 - self.t0)))
-            #  self.learning_rate = self.learning_rate * self.lr_inc
             for pg in self.optim.param_groups:
                 pg['lr'] = lr
             self.optim.defaults['lr'] = lr
