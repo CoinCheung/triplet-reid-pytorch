@@ -22,6 +22,7 @@ Run the script of ```datasets/download_market1501.sh``` to download and uncompre
 This will train an embedder model based on ResNet-50. The trained model will be stored in the path of ```/res/model.pkl```.
 
 
+### embed the query and gallery dataset
 * To embed the gallery set and query set of Market1501, run the corresponding embedding scripts:
 ```
     $ python3 embed.py \
@@ -34,6 +35,8 @@ This will train an embedder model based on ResNet-50. The trained model will be 
 ```
 These scripts will use the trained embedder to embed the gallery and query set of Market1501, and store the embeddings as ```/res/embd_gallery.pkl``` and ```/res/emb_query.pkl```.
 
+
+### evaluate the embeddings
 * Then compute the rank-1 cmc and mAP:  
 ```
     $ python3 eval.py --gallery_embs ./res/emb_gallery.pkl \
@@ -43,6 +46,7 @@ These scripts will use the trained embedder to embed the gallery and query set o
 This will evaluate the model with the query and gallery dataset.
 
 
+### Notes
 After refering to some other paper and implementations, I got to to know two tricks that help to boost the performance:   
 * adjust the stride of the last stage of resnet from 2 to 1.
 * use augmentation method of [random erasing](https://arxiv.org/abs/1708.04896).
