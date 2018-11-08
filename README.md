@@ -3,7 +3,7 @@ This is a simple implementation of the algorithm proposed in paper [In Defense o
 
 This project is based on pytorch0.4.0 and python3. 
 
-To be straight-forward and simple, only the method of training on pretrained Resnet-50 with batch-hard sampler is implemented.
+To be straight-forward and simple, only the method of training on pretrained Resnet-50 with batch-hard sampler(*TriNet* according to the authors) is implemented.
 
 
 * To train on the Market1501 dataset, just run the train script:  
@@ -31,3 +31,11 @@ This script will use the trained embedder to embed the gallery and query set of 
       --query_embs ./res/emb_query.pkl \
       --cmc_rank 1
 ```
+This will evaluate the model with the query and gallery dataset.
+
+
+After refering to some other paper and implementations, I got to to know two tricks that helps to boost the performance:   
+* adjust the stride of the last stage of resnet from 2 to 1.
+* use augmentation method of [random erasing](https://arxiv.org/abs/1708.04896).
+
+With these two tricks, the mAP and rank-1 cmc on Market1501 dataset reaches 76.04/88.27, much higher than the result claimed in the paper.

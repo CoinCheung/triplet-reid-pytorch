@@ -3,6 +3,7 @@
 
 import torch
 import numpy as np
+from PIL import Image
 
 
 def pdist_torch(emb1, emb2):
@@ -29,13 +30,8 @@ def pdist_np(emb1, emb2):
     emb2_pow = np.square(emb2).sum(axis = 1)[np.newaxis, ...]
     dist_mtx = -2 * np.matmul(emb1, emb2.T) + emb1_pow + emb2_pow
     dist_mtx = np.sqrt(dist_mtx.clip(min = 1e-12))
-    #  m, n = emb1.shape[0], emb2.shape[0]
-    #  emb1_pow = np.power(emb1, 2).sum(axis = 1, keepdims = False).repeat(n).reshape(m,n)
-    #  emb2_pow = np.power(emb2, 2).sum(axis = 1, keepdims = False).repeat(m).reshape(n, m).T
-    #  dist_mtx = emb1_pow + emb2_pow
-    #  dist_mtx = dist_mtx - 2 * emb1.dot(emb2.T)
-    #  dist_mtx = np.sqrt(dist_mtx.clip(min = 1e-12))
     return dist_mtx
+
 
 
 if __name__ == "__main__":
@@ -50,3 +46,4 @@ if __name__ == "__main__":
     r2 = pdist_torch(a, b)
     print(r2.shape)
     print(r2)
+

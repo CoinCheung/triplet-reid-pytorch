@@ -10,6 +10,7 @@ import sys
 import os
 import logging
 import time
+import itertools
 
 from backbone import EmbedNetwork
 from loss import TripletLoss
@@ -22,13 +23,8 @@ from logger import logger
 
 torch.multiprocessing.set_sharing_strategy('file_system')
 
-## TODO:
-## 1. see training scheme of 300 epochs (change lr each epoch instead of iter)
-## 2. see embedding length of 2048
-
 
 def train():
-
     ## model and loss
     logger.info('setting up backbone model and loss')
     net = EmbedNetwork().cuda()
@@ -37,7 +33,7 @@ def train():
 
     ## optimizer
     logger.info('creating optimizer')
-    optim = AdamOptimWrapper(net.parameters(), lr = 3e-4, wd = 5e-4, t0 = 15000, t1 = 25000)
+    optim = AdamOptimWrapper(net.parameters(), lr = 3e-4, wd = 0, t0 = 15000, t1 = 25000)
 
     ## dataloader
     selector = BatchHardTripletSelector()
@@ -53,10 +49,10 @@ def train():
     t_start = time.time()
     while True:
         try:
-            imgs, lbs, _ = diter.next()
+            imgs, lbs, _ = next(diter)
         except StopIteration:
             diter = iter(dl)
-            imgs, lbs, _ = diter.next()
+            imgs, lbs, _ = next(diter)
 
         net.train()
         imgs = imgs.cuda()

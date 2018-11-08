@@ -14,7 +14,7 @@ class AdamOptimWrapper(object):
     A wrapper of Adam optimizer which allows to adjust the optimizing parameters
     according to the stategy presented in the paper
     '''
-    def __init__(self, params, lr, wd, t0, t1, *args, **kwargs):
+    def __init__(self, params, lr, wd=0, t0=15000, t1=25000, *args, **kwargs):
         super(AdamOptimWrapper, self).__init__(*args, **kwargs)
         self.base_lr = lr
         self.wd = wd

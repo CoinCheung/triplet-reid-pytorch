@@ -46,9 +46,6 @@ class BatchSampler(Sampler):
                     idx_smp = np.random.choice(self.lb_img_dict[lb],
                             self.n_num, replace = True)
                 idx.extend(idx_smp.tolist())
-                for nu in idx:
-                    if nu >= 12936:
-                        print(idx)
             yield idx
 
     def __len__(self):
@@ -57,14 +54,15 @@ class BatchSampler(Sampler):
 
 if __name__ == "__main__":
     from datasets.Market1501 import Market1501
-    ds = Market1501('datasets/Market-1501-v15.09.15/bounding_box_train', mode = 'train')
-    sampler = BatchSampler(ds, 5, 4)
+    ds = Market1501('datasets/Market-1501-v15.09.15/bounding_box_train', is_train = False)
+    sampler = BatchSampler(ds, 18, 4)
     dl = DataLoader(ds, batch_sampler = sampler, num_workers = 4)
+    import itertools
 
-    for i, (ims, lbs, _) in enumerate(dl):
-        print(ims.shape)
+    diter = itertools.cycle(dl)
+
+    while True:
+        ims, lbs, _ = next(diter)
         print(lbs.shape)
-        print(lbs)
-        break
     print(len(list(ds.lb_ids_uniq)))
 
