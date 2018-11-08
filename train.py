@@ -22,7 +22,7 @@ from logger import logger
 
 
 torch.multiprocessing.set_sharing_strategy('file_system')
-
+if not os.path.exists('./res'): os.makedirs('./res')
 
 def train():
     ## model and loss
@@ -78,7 +78,6 @@ def train():
         if count == 25000: break
 
     ## dump model
-    if not os.path.exists('./res'): os.makedirs('./res')
     logger.info('saving trained model')
     torch.save(net.module.state_dict(), './res/model.pkl')
 

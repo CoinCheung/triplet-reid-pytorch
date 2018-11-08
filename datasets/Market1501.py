@@ -27,7 +27,6 @@ class Market1501(Dataset):
         self.lb_ids = [int(el.split('_')[0]) for el in self.imgs]
         self.lb_cams = [int(el.split('_')[1][1]) for el in self.imgs]
         self.imgs = [os.path.join(data_path, el) for el in self.imgs]
-        self.random_erase = RandomErasing()
         if is_train:
             self.trans = transforms.Compose([
                 transforms.Resize((288, 144)),
@@ -70,26 +69,6 @@ class Market1501(Dataset):
 
 if __name__ == "__main__":
     ds = Market1501('./Market-1501-v15.09.15/bounding_box_train', is_train = True)
-
-    #  im = cv2.imread('Market-1501-v15.09.15/query/0530_c3s1_149183_00.jpg')
-    #  ToTensor = torchvision.transforms.ToTensor()
-    #  norm = torchvision.transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
-    #  deal = torchvision.transforms.Compose([ToTensor, norm])
-    #  Lambda = torchvision.transforms.Lambda(
-    #      lambda crops: torch.stack([deal(crop) for crop in crops]))
-    #  im = Image.fromarray(im, 'RGB')
-    #  crop1 = torchvision.transforms.Resize((288, 144))
-    #  crop2 = torchvision.transforms.TenCrop((256, 128))
-    #  trans = torchvision.transforms.Compose([
-    #      crop1, crop2, Lambda
-    #      ])
-    #  im = trans(im)
-    #  print(im.shape)
-    #  print(len(im))
-    #  print(im[0].shape)
-    #
-    #  print(len(ds))
-    #  print(ds[12935])
 
     im, _, _ = ds[1]
     print(im.shape)
