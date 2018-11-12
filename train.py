@@ -38,9 +38,12 @@ def train():
     optim = AdamOptimWrapper(net.parameters(), lr = 3e-4, wd = 0, t0 = 15000, t1 = 25000)
 
     ## dataloader
+    P = 18
+    K = 4
+    batchsize = P * K
     selector = BatchHardTripletSelector()
     ds = Market1501('datasets/Market-1501-v15.09.15/bounding_box_train', is_train = True)
-    sampler = BatchSampler(ds, 18, 4)
+    sampler = BatchSampler(ds, P, K)
     dl = DataLoader(ds, batch_sampler = sampler, num_workers = 4)
     diter = iter(dl)
 
@@ -52,6 +55,7 @@ def train():
     while True:
         try:
             imgs, lbs, _ = next(diter)
+            if not imgs.shape[0] == batchsize: continue
         except StopIteration:
             diter = iter(dl)
             imgs, lbs, _ = next(diter)
